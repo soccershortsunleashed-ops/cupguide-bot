@@ -1,0 +1,1501 @@
+{% extends "base.html" %}
+
+{% block content %}
+<ul class="nav nav-tabs mb-4 d-none" id="myTab" role="tablist" style="display: none !important;">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages"
+            type="button">Сообщения</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="channels-tab" data-bs-toggle="tab" data-bs-target="#channels"
+            type="button">Каналы</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp"
+            type="button">WhatsApp</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts"
+            type="button">Контакты</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tournaments-tab" data-bs-toggle="tab" data-bs-target="#tournaments"
+            type="button">Турниры</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="group-data-tab" data-bs-toggle="tab" data-bs-target="#group-data"
+            type="button">Сбор данных по группам</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <!-- Dashboard Tab -->
+    <div class="tab-pane fade" id="dashboard" role="tabpanel">
+        <header class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div class="flex flex-col gap-1">
+                <h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Dashboard</h1>
+                <p class="text-gray-400 text-base font-normal leading-normal">Welcome back, Admin! Here's what's happening today.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="p-2 rounded-full hover:bg-white/10 transition-colors">
+                    <span class="material-symbols-outlined text-gray-300">notifications</span>
+                </button>
+                <div class="bg-primary rounded-full w-10 h-10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg">person</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Key Metrics Section -->
+        <section class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            <div class="flex flex-col gap-2 rounded-xl glassmorphic p-6">
+                <p class="text-gray-300 text-base font-medium leading-normal">Всего контактов</p>
+                <p class="text-white tracking-light text-2xl font-bold leading-tight" id="dashboardTotalContacts">0</p>
+                <p class="text-green-400 text-base font-medium leading-normal" id="dashboardContactsChange">+0%</p>
+            </div>
+            <div class="flex flex-col gap-2 rounded-xl glassmorphic p-6">
+                <p class="text-gray-300 text-base font-medium leading-normal">Новых сообщений сегодня</p>
+                <p class="text-white tracking-light text-2xl font-bold leading-tight" id="dashboardMessagesToday">0</p>
+                <p class="text-green-400 text-base font-medium leading-normal" id="dashboardMessagesChange">+0%</p>
+            </div>
+            <div class="flex flex-col gap-2 rounded-xl glassmorphic p-6">
+                <p class="text-gray-300 text-base font-medium leading-normal">Активных каналов</p>
+                <p class="text-white tracking-light text-2xl font-bold leading-tight" id="dashboardActiveChannels">0</p>
+                <p class="text-green-400 text-base font-medium leading-normal" id="dashboardChannelsChange">+0</p>
+            </div>
+            <div class="flex flex-col gap-2 rounded-xl glassmorphic p-6">
+                <p class="text-gray-300 text-base font-medium leading-normal">WhatsApp групп</p>
+                <p class="text-white tracking-light text-2xl font-bold leading-tight" id="dashboardWhatsAppGroups">0</p>
+                <p class="text-green-400 text-base font-medium leading-normal" id="dashboardGroupsChange">+0</p>
+            </div>
+        </section>
+        
+        <!-- Charts Section -->
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+            <div class="flex flex-col gap-4 rounded-xl glassmorphic p-6 lg:col-span-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Engagement Metrics</h2>
+                        <p class="text-gray-400 text-base font-normal leading-normal">Messages, reactions, and user joins over time.</p>
+                    </div>
+                    <select class="bg-transparent border border-white/20 rounded-lg text-sm text-gray-300 px-3 py-1.5 focus:ring-primary focus:border-primary" id="engagementTimeRange">
+                        <option>Last 30 days</option>
+                        <option>Last 90 days</option>
+                        <option>All time</option>
+                    </select>
+                </div>
+                <div class="flex-grow flex items-center justify-center min-h-[250px] bg-black/20 rounded-lg">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+            <div class="flex flex-col gap-4 rounded-xl glassmorphic p-6 lg:col-span-1">
+                <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Message Frequency</h2>
+                <p class="text-gray-400 text-base font-normal leading-normal">Heat map by day and hour (UTC).</p>
+                <div class="flex-grow flex items-center justify-center min-h-[250px] bg-black/20 rounded-lg">
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
+            <div class="flex flex-col gap-4 rounded-xl glassmorphic p-6">
+                <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Topic Distribution</h2>
+                <p class="text-gray-400 text-base font-normal leading-normal">Message volume by topic cluster.</p>
+                <div class="flex-grow flex items-center justify-center min-h-[300px] bg-black/20 rounded-lg">
+                    <canvas id="topicChart"></canvas>
+                </div>
+            </div>
+            <div class="flex flex-col gap-4 rounded-xl glassmorphic p-6">
+                <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Message Types</h2>
+                <p class="text-gray-400 text-base font-normal leading-normal">Breakdown of messages sent.</p>
+                <div class="flex-grow flex items-center justify-center min-h-[300px] bg-black/20 rounded-lg">
+                    <canvas id="messageTypesChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+            <div class="flex flex-col gap-4 rounded-xl glassmorphic p-6 lg:col-span-2">
+                <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">User Origins</h2>
+                <p class="text-gray-400 text-base font-normal leading-normal">Geographical distribution of active users.</p>
+                <div class="flex-grow flex items-center justify-center min-h-[300px] bg-black/20 rounded-lg">
+                    <canvas id="userOriginsChart"></canvas>
+                </div>
+            </div>
+            <div class="flex flex-col gap-6 lg:col-span-1">
+                <div class="flex flex-1 flex-col gap-4 rounded-xl glassmorphic p-6">
+                    <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Channel Comparison</h2>
+                    <p class="text-gray-400 text-base font-normal leading-normal">Top 3 channels by metrics.</p>
+                    <div class="flex-grow flex items-center justify-center min-h-[150px] bg-black/20 rounded-lg">
+                        <canvas id="channelComparisonChart"></canvas>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3 rounded-xl glassmorphic p-6">
+                    <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Real-time Alerts</h2>
+                    <div id="dashboardAlerts" class="flex flex-col gap-3">
+                        <!-- Alerts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Messages Tab -->
+    <div class="tab-pane fade show active" id="messages" role="tabpanel">
+        <div class="flex justify-between items-center mb-3">
+            <h1 class="text-white text-base font-bold">Лента новостей</h1>
+            <div class="flex items-center gap-2">
+                <button class="flex items-center gap-1 px-2 py-1 bg-white/10 border border-white/10 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all text-[10px] font-bold" id="redownloadMediaBtn" title="Перезагрузить все медиа файлы">
+                    <span class="material-symbols-outlined text-sm">sync</span>
+                    Перезагрузить медиа
+                </button>
+                <button class="flex items-center gap-1 px-2 py-1 bg-primary text-white rounded-lg hover:bg-primary/80 transition-all text-[10px] font-bold" id="refreshMessagesBtn">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    Обновить
+                </button>
+            </div>
+        </div>
+
+        <!-- Channel tabs -->
+        <div class="border-b border-white/10 mb-3 overflow-x-auto">
+            <nav class="flex space-x-3 -mb-px" id="channelTabs" role="tablist" style="white-space: nowrap; flex-wrap: nowrap;">
+                <!-- Dynamic channel tabs will be added here -->
+            </nav>
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-content" id="channelTabsContent">
+            <!-- Dynamic channel tab panes will be added here -->
+        </div>
+    </div>
+
+    <!-- Channels Tab -->
+    <div class="tab-pane fade" id="channels" role="tabpanel">
+        <div class="flex justify-between items-center mb-3">
+            <h1 class="text-white text-base font-bold">Каналы</h1>
+        </div>
+        
+        <section class="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2">
+                <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Добавить канал</h2>
+                <form id="addChannelForm" class="flex flex-col gap-2">
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="channelPlatform">Платформа</label>
+                        <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="channelPlatform">
+                            <option value="telegram">Telegram</option>
+                            <option value="whatsapp">WhatsApp</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="channelType">Тип</label>
+                        <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="channelType">
+                            <option value="source">Источник</option>
+                            <option value="target">Цель</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="channelInput">Ссылка или Username</label>
+                        <input class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="channelInput" placeholder="@username или https://t.me/..." type="text"/>
+                    </div>
+                    <button type="submit" class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors">
+                        <span class="truncate">Добавить</span>
+                    </button>
+                </form>
+            </div>
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Список каналов</h2>
+                <div class="flex flex-col divide-y divide-white/10" id="channelsList">
+                    <!-- Channels will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- WhatsApp Tab -->
+    <div class="tab-pane fade" id="whatsapp" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>WhatsApp Подключение</span>
+                        <span id="whatsappStatus" class="badge bg-secondary">Не подключено</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Disconnected state -->
+                        <div id="whatsappDisconnected" class="text-center">
+                            <i class="bi bi-whatsapp text-success" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">Подключите WhatsApp</h5>
+                            <p class="text-muted">Отсканируйте QR-код для авторизации</p>
+                            <div id="qrCodeContainer" class="d-none my-4">
+                                <div class="alert alert-info">
+                                    <strong>Инструкция:</strong>
+                                    <ol class="text-start mt-2 mb-0">
+                                        <li>Откройте WhatsApp на телефоне</li>
+                                        <li>Перейдите в Настройки → Связанные устройства</li>
+                                        <li>Нажмите "Привязать устройство"</li>
+                                        <li>Отсканируйте QR-код ниже</li>
+                                    </ol>
+                                </div>
+                                <div id="qrCodeImage" class="bg-white p-3 border rounded mx-auto"
+                                    style="max-width: 300px;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Загрузка...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="connectWhatsAppBtn" class="btn btn-success mt-3">
+                                <i class="bi bi-whatsapp"></i> Подключить WhatsApp
+                            </button>
+                        </div>
+
+                        <!-- Connected state -->
+                        <div id="whatsappConnected" class="d-none">
+                            <div class="text-center mb-4">
+                                <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">WhatsApp подключен!</h5>
+                            </div>
+
+                            <!-- Monitored chats section -->
+                            <div class="mb-4">
+                                <h5>Добавить чат для мониторинга</h5>
+                                <div class="input-group mb-2">
+                                    <select id="whatsappChatSelect" class="form-select">
+                                        <option>Выберите чат из списка...</option>
+                                    </select>
+                                    <button type="button" id="addMonitoredChatBtn" class="btn btn-primary">
+                                        <i class="bi bi-plus-circle"></i> Добавить из списка
+                                    </button>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="whatsappChatIdInput" class="form-control" 
+                                           placeholder="Или введите ID группы (например: 120363423586684320@g.us)">
+                                    <button type="button" id="addMonitoredChatByIdBtn" class="btn btn-outline-primary">
+                                        <i class="bi bi-plus-circle"></i> Добавить по ID
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1">ID группы должно заканчиваться на @g.us</small>
+                            </div>
+
+                            <!-- List of monitored chats -->
+                            <div class="mb-4">
+                                <h5>Мониторимые чаты <span id="monitoredChatsCount" class="badge bg-secondary">0</span>
+                                </h5>
+                                <div id="monitoredChatsList" class="list-group">
+                                    <div class="list-group-item text-muted text-center">
+                                        Нет мониторимых чатов
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button id="disconnectWhatsAppBtn" class="btn btn-outline-danger">
+                                    <i class="bi bi-x-circle"></i> Отключить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contacts Tab -->
+    <div class="tab-pane fade" id="contacts" role="tabpanel">
+        <div class="flex flex-wrap justify-between gap-3 mb-3">
+            <h1 class="text-white text-2xl font-black leading-tight tracking-[-0.033em] min-w-72">Contacts Management</h1>
+            <button onclick="openCreateGroupModal()" class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-white text-sm font-bold rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-base">add</span>
+                Создать группу
+            </button>
+        </div>
+                
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3" style="min-height: calc(100vh - 200px);">
+                    <!-- Left Column: Import and Manual Add -->
+                    <div class="lg:col-span-1 flex flex-col gap-3" style="height: 100%;">
+                        <!-- Import Contacts Card -->
+                        <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2 flex-shrink-0">
+                            <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Импорт контактов</h2>
+                            <p class="text-white/80 text-[10px] font-normal leading-normal">Загрузите файл в формате XLSX. Колонки: Имя, Телефон, Группа.</p>
+                            <div class="flex flex-col items-center gap-1.5 rounded-lg border-2 border-dashed border-white/20 px-3 py-4">
+                                <p class="text-white text-xs font-bold leading-tight tracking-[-0.015em] text-center">Перетащите файл XLSX сюда</p>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal text-center">или нажмите кнопку ниже для выбора файла.</p>
+                                <input type="file" class="hidden" id="contactsFileInput" accept=".xlsx,.xls" onchange="showSelectedFileName(this)">
+                                <button type="button" onclick="document.getElementById('contactsFileInput').click()" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors">
+                                    <span class="truncate">Выбрать файл</span>
+                                </button>
+                                <p id="selectedFileName" class="text-green-400 text-[10px] font-medium mt-1 hidden"></p>
+                            </div>
+                            <div>
+                                <label for="importGroupSelect" class="block text-[10px] font-medium text-white/80 mb-0.5">Группа для импорта</label>
+                                <select id="importGroupSelect" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors">
+                                    <option value="Общая" class="bg-background-dark">Общая</option>
+                                    <option value="Тренеры по футболу" class="bg-background-dark">Тренеры по футболу</option>
+                                    <option value="Экипировка" class="bg-background-dark">Экипировка</option>
+                                </select>
+                            </div>
+                            <button id="parseContactsBtn" class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors">
+                                <span class="truncate">Загрузить и распознать</span>
+                            </button>
+                        </div>
+
+                        <!-- Manual Add Contact Card -->
+                        <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2 flex-1">
+                            <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Добавить контакт вручную</h2>
+                            <form id="addContactForm" class="flex flex-col gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="manualContactName">Имя</label>
+                                    <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="manualContactName" placeholder="Имя контакта" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="manualContactPhone">Телефон</label>
+                                    <input type="tel" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="manualContactPhone" placeholder="+79001234567" required>
+                                    <small class="text-white/60 text-[9px] mt-0.5 block">Формат: +79001234567</small>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="manualContactGroup">Группа</label>
+                                    <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="manualContactGroup" required>
+                                        <option value="" class="bg-background-dark">Загрузка групп...</option>
+                                    </select>
+                                </div>
+                                <button type="submit" id="addContactBtn" class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors">
+                                    <span class="truncate">Добавить контакт</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Preview Card (Hidden by default) -->
+                        <div id="contactsPreviewCard" class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2 hidden" style="max-height: 300px;">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Предпросмотр</h2>
+                                <span id="previewCount" class="bg-primary text-white px-1.5 py-0.5 rounded-full text-[10px] font-semibold">0</span>
+                            </div>
+                            <div class="overflow-y-auto flex-1 -mx-3" style="max-height: 200px;">
+                                <table class="w-full text-left" style="table-layout: fixed;">
+                                    <colgroup>
+                                        <col style="width: 45%;">
+                                        <col style="width: 45%;">
+                                        <col style="width: 10%;">
+                                    </colgroup>
+                                    <thead class="border-b border-white/10 sticky top-0 bg-gray-900/95">
+                                        <tr>
+                                            <th class="px-2 py-1 text-[10px] font-semibold text-white/60" scope="col">Имя</th>
+                                            <th class="px-2 py-1 text-[10px] font-semibold text-white/60" scope="col">Телефон</th>
+                                            <th class="px-2 py-1 text-[10px] font-semibold text-white/60" scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contactsPreviewBody" class="divide-y divide-white/10">
+                                        <!-- Preview items -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button id="saveContactsBtn" class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors">
+                                <span class="truncate">Сохранить в базу</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Contacts List -->
+                    <div class="lg:col-span-2 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col" style="height: calc(100vh - 150px); max-height: calc(100vh - 150px); overflow: hidden;">
+                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                            <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Список контактов <span id="contactsCount" class="bg-primary text-white px-1.5 py-0.5 rounded-full text-[10px] font-semibold ml-1.5">0</span></h2>
+                            <div class="flex items-center gap-1.5">
+                                <input type="text" id="searchContacts" class="bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors w-28" placeholder="Поиск...">
+                                <button id="refreshContactsBtn" class="text-white/60 hover:text-primary transition-colors p-1" title="Обновить список контактов">
+                                    <span class="material-symbols-outlined text-base">refresh</span>
+                                </button>
+                                <button class="text-white/60 hover:text-primary transition-colors p-1" id="enrichAllBtn" onclick="enrichAllContacts()" title="Обновить все из WhatsApp">
+                                    <span class="material-symbols-outlined text-base">cloud_download</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress indicator -->
+                        <div id="enrichmentProgress" class="bg-primary/20 border border-primary/30 rounded-lg p-2 mb-2 hidden flex-shrink-0">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <strong class="text-white text-[10px]">Обновление контактов из WhatsApp</strong>
+                                    <div class="mt-0.5 text-[10px] text-white/80">
+                                        <span>Всего: <strong id="progressTotal">0</strong></span> | 
+                                        <span>Обработано: <strong id="progressProcessed">0</strong></span> | 
+                                        <span>Осталось: <strong id="progressRemaining">0</strong></span>
+                                    </div>
+                                </div>
+                                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            </div>
+                            <div class="mt-1.5 bg-black/20 rounded-full h-1 overflow-hidden">
+                                <div id="progressBar" class="bg-primary h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto overflow-x-hidden -mx-3 px-3" style="min-height: 0; max-height: 100%;">
+                            <table class="w-full text-left" style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;">
+                                <colgroup>
+                                    <col style="width: 2.5%;">
+                                    <col style="width: 7%;">
+                                    <col style="width: 25%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 28%;">
+                                    <col style="width: 22.5%;">
+                                </colgroup>
+                                <thead class="border-b border-white/10 sticky top-0 bg-background-dark/95 backdrop-blur-sm z-10">
+                                    <tr>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-left align-baseline" scope="col">
+                                            <input type="checkbox" id="selectAllContacts" class="rounded border-white/20 bg-black/20 text-primary focus:ring-primary w-2.5 h-2.5">
+                                        </th>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-left align-baseline" scope="col" style="white-space: nowrap;">ID</th>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-left align-baseline" scope="col">Имя</th>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-left align-baseline" scope="col" style="white-space: nowrap;">Телефон</th>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-left align-baseline" scope="col">Группа</th>
+                                        <th class="px-2 py-1.5 text-[10px] font-semibold text-white/60 text-right align-baseline" scope="col" style="white-space: nowrap;">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactsListBody" class="divide-y divide-white/10">
+                                    <!-- Contacts will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+    </div>
+
+    <!-- Tournaments Tab -->
+    <div class="tab-pane fade" id="tournaments" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Турниры</h3>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success" id="createTournamentBtn" onclick="openCreateTournamentModal()">
+                    <i class="bi bi-plus-circle"></i> Создать турнир
+                </button>
+                <button class="btn btn-primary" id="refreshTournamentsBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Обновить
+                </button>
+            </div>
+        </div>
+        <div id="tournamentsList" class="row g-4">
+            <!-- Tournaments will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Group Data Collection Tab -->
+    <div class="tab-pane fade" id="group-data" role="tabpanel">
+        <div class="flex justify-between items-center mb-3">
+            <h1 class="text-white text-base font-bold">Сбор данных</h1>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <!-- Collection Settings Card -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2">
+                <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Настройки сбора</h2>
+                <form class="flex flex-col gap-2">
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="platform">Выбрать платформу</label>
+                        <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="platform">
+                            <option value="telegram">Telegram</option>
+                            <option value="whatsapp">WhatsApp</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="data-type">Тип данных</label>
+                        <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="data-type">
+                            <option value="messages">Сообщения</option>
+                            <option value="contacts">Контакты</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="groupIdInput">ID группы/канала</label>
+                        <input class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="groupIdInput" placeholder="Введите ID" type="text"/>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Launch and Status Card -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col gap-2">
+                <h2 class="text-white text-base font-bold leading-tight tracking-[-0.015em]">Запуск и статус</h2>
+                <div class="flex flex-col gap-2">
+                    <div>
+                        <label class="block text-[10px] font-medium text-white/80 mb-0.5" for="participantsCount">Кол-во участников</label>
+                        <input class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-2 py-1 text-xs focus:ring-primary focus:border-primary transition-colors" id="participantsCount" placeholder="0" type="text" readonly/>
+                    </div>
+                    <button class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-primary text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors" id="collectContactsBtn" onclick="collectGroupContacts()">
+                        <span class="truncate">Собрать контакты участников</span>
+                    </button>
+                    <button class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-white/10 border border-white/10 text-white text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-white/20 transition-colors" id="checkGroupsBtn" onclick="checkMyGroups()">
+                        <span class="truncate">Проверка айди моих групп</span>
+                    </button>
+                    <button class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-green-500/20 border border-green-500/30 text-green-400 text-[10px] font-bold leading-normal tracking-[0.015em] hover:bg-green-500/30 transition-colors" id="loadToContactsBtn" onclick="loadContactsToAddressBook()" disabled>
+                        <span class="truncate">Загрузить в записную книжку</span>
+                    </button>
+                    <div id="loadResult" class="hidden"></div>
+                    
+                    <div class="flex flex-col gap-2 mt-2">
+                        <h3 class="text-white/80 text-[10px] font-medium">Последние задачи</h3>
+                        <div id="tasksList" class="flex flex-col gap-2">
+                            <!-- Tasks will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Collected Contacts List (Hidden by default) -->
+        <div id="collectedContactsList" class="mt-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 hidden" style="max-height: calc(100vh - 300px); overflow-y: auto;">
+            <h3 class="text-white text-base font-bold mb-2">Собранные контакты</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-white/10 sticky top-0 bg-background-dark/95 backdrop-blur-sm">
+                        <tr>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">ID</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Имя</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Телефон</th>
+                        </tr>
+                    </thead>
+                    <tbody id="collectedContactsTableBody" class="divide-y divide-white/10">
+                        <!-- Collected contacts will be displayed here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- My Groups List (Hidden by default) -->
+        <div id="myGroupsList" class="mt-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 hidden" style="max-height: calc(100vh - 300px); overflow-y: auto;">
+            <h3 class="text-white text-base font-bold mb-2">Мои группы WhatsApp</h3>
+            <div id="groupsDebugInfo" class="bg-primary/20 border border-primary/30 rounded-lg p-2 mb-2 hidden">
+                <small id="groupsDebugText" class="text-white/80 text-[9px]"></small>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-white/10 sticky top-0 bg-background-dark/95 backdrop-blur-sm">
+                        <tr>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">№</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Название группы</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">ID группы</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Тип</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Участников</th>
+                            <th class="px-1.5 py-1.5 text-[10px] font-semibold text-white/60" scope="col">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myGroupsTableBody" class="divide-y divide-white/10">
+                        <!-- Groups will be displayed here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Toolbar -->
+<div id="bulkActionsToolbar" class="alert alert-info d-none position-fixed bottom-0 start-50 translate-middle-x mb-3"
+    style="z-index: 1050; min-width: 400px;">
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Выбрано: <strong id="selectedCount">0</strong></span>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-primary" onclick="openBulkMoveModal()">
+                <i class="bi bi-folder"></i> Переместить
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="bulkDeleteContacts()">
+                <i class="bi bi-trash"></i> Удалить
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Move Modal -->
+<div class="modal fade" id="bulkMoveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Переместить контакты</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Выберите группу</label>
+                    <select class="form-select" id="bulkMoveGroupSelect">
+                        <option value="Общая">Общая</option>
+                        <option value="Тренеры по футболу">Тренеры по футболу</option>
+                        <option value="Экипировка">Экипировка</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitBulkMove()">Переместить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Messages Modal -->
+<div class="modal fade" id="whatsappMessagesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">История чата: <span id="whatsappModalTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="whatsappModalMessages" class="d-flex flex-column gap-3">
+                    <!-- Messages will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Contact Modal -->
+<div class="modal fade" id="editContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать контакт</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editContactId">
+                <div class="mb-3">
+                    <label class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="editContactName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Телефон</label>
+                    <input type="text" class="form-control" id="editContactPhone">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Группа</label>
+                    <select class="form-select" id="editContactGroup">
+                        <option value="Общая">Общая</option>
+                        <option value="Тренеры по футболу">Тренеры по футболу</option>
+                        <option value="Экипировка">Экипировка</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveContactChangesBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Send Message Modal -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendMessageTitle">Отправить сообщение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="messageRecipientId">
+                <input type="hidden" id="messageType"> <!-- 'contact' or 'group' -->
+
+                <div class="mb-3">
+                    <label class="form-label">Получатель:</label>
+                    <input type="text" class="form-control" id="messageRecipientName" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Сообщение</label>
+                    <textarea class="form-control" id="messageText" rows="5"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-success" onclick="sendMessage()">
+                    <i class="bi bi-send"></i> Отправить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Selection Modal for Broadcast -->
+<div class="modal fade" id="groupSelectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Выберите группу для рассылки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action"
+                        onclick="selectGroupForMessage('Общая')">
+                        Общая
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action"
+                        onclick="selectGroupForMessage('Тренеры по футболу')">
+                        Тренеры по футболу
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action"
+                        onclick="selectGroupForMessage('Экипировка')">
+                        Экипировка
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message template -->
+<template id="messageTemplate">
+    <div class="flex flex-col gap-2">
+        <div class="flex justify-between items-center px-3">
+            <div class="flex items-center gap-1 author-row">
+                <p class="text-white text-sm font-medium channel-name"></p>
+                <button class="author-info-button hidden" title="Открыть карточку контакта" style="display: none;">
+                    <span style="font-size: 10px; font-weight: bold;">i</span>
+                </button>
+            </div>
+            <p class="text-white/60 text-sm message-date"></p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 px-3">
+            <!-- Original Column -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3">
+                <h3 class="text-white/80 text-base font-semibold mb-2">Оригинал</h3>
+                <div class="message-media-container mb-2"></div>
+                <div class="text-white/80 text-sm space-y-2">
+                    <div class="message-text"></div>
+                    <a href="#" target="_blank" class="text-blue-400 message-link hidden">Открыть в Telegram</a>
+                </div>
+            </div>
+            <!-- Rewrite Column -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col">
+                <h3 class="text-white/80 text-base font-semibold mb-2">Rewrite (ChatGPT)</h3>
+                <div class="text-white/80 text-sm space-y-2 flex-grow rewrite-content">
+                    <p class="text-white/60 italic">Нажмите "Рерайт", чтобы переписать текст.</p>
+                </div>
+                <div class="flex items-center gap-2 mt-auto">
+                    <button class="flex items-center justify-center px-2 py-1 bg-white/10 border border-white/10 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 text-[10px] font-bold generate-rewrite-btn">
+                        <span class="material-symbols-outlined text-sm mr-1">edit</span> Рерайт
+                    </button>
+                    <button class="flex items-center justify-center px-2 py-1 bg-primary text-white rounded-lg hover:bg-primary/80 transition-all duration-200 text-[10px] font-bold publish-btn hidden">
+                        <span class="material-symbols-outlined text-sm mr-1">send</span> Опубликовать
+                    </button>
+                    <button class="flex items-center justify-center px-2 py-1 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/30 transition-all duration-200 text-[10px] font-bold analyze-tournament-btn" style="display: none;">
+                        <span class="material-symbols-outlined text-sm mr-1">analytics</span> Анализировать
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Contacts Help Modal -->
+<div class="modal fade" id="contactsHelpModal" tabindex="-1" aria-labelledby="contactsHelpModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h5 class="text-white text-base font-bold leading-tight tracking-[-0.015em] flex items-center gap-2" id="contactsHelpModalLabel">
+                    <span class="material-symbols-outlined text-lg">help</span>
+                    Справка по кнопкам
+                </h5>
+                <button type="button" class="text-white/70 hover:text-white transition-colors cursor-pointer" onclick="closeHelpModal('contactsHelpModal')" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto" style="flex: 1 1 auto; min-height: 0;">
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Кнопки в заголовке списка контактов:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-primary/20 border border-primary/30 rounded-lg text-primary flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">refresh</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Обновить список контактов</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Обновляет список контактов из базы данных без обращения к WhatsApp API.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">cloud_download</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Обновить все из WhatsApp</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Массовое обновление всех контактов через Green API. Получает: имя в WhatsApp, аватар, WhatsApp ID, email, категорию бизнеса, описание, информацию о продуктах (для бизнес-аккаунтов), статус регистрации в WhatsApp и другую доступную информацию. Может занять некоторое время.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">help</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Справка</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Открывает это окно со справкой по всем кнопкам интерфейса.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Кнопки действий для каждого контакта:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">info</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Информация о контакте</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Открывает карточку контакта с подробной информацией: инсайты, история сообщений, извлеченная информация об авторе.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">chat</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Отправить сообщение</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Открывает окно для отправки сообщения контакту через WhatsApp.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-primary/20 border border-primary/30 rounded-lg text-primary flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Редактировать</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Открывает форму для редактирования имени, телефона и группы контакта.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-white/10 border border-white/20 rounded-lg text-white/70 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">refresh</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Обновить из WhatsApp</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Обновляет информацию о конкретном контакте из WhatsApp: имя, аватар, WhatsApp ID и другую доступную информацию.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Удалить</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Удаляет контакт из базы данных. Действие необратимо.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Другие кнопки:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-primary rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">send</span>
+                                Рассылка
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Рассылка по группе</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Отправляет сообщение всем контактам выбранной группы через WhatsApp (используется Green API).</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-primary rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">folder</span>
+                                Переместить
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Переместить контакты</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Перемещает выбранные контакты в другую группу. Появляется при выборе контактов через чекбоксы.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-red-500 rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">delete</span>
+                                Удалить
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Массовое удаление</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Удаляет все выбранные контакты. Появляется при выборе контактов через чекбоксы.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end p-4 border-t border-white/10">
+                <button type="button" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold leading-normal tracking-[0.015em] transition-colors" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal for Messages Tab -->
+<div class="modal fade" id="messagesHelpModal" tabindex="-1" aria-labelledby="messagesHelpModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h5 class="text-white text-base font-bold leading-tight tracking-[-0.015em] flex items-center gap-2" id="messagesHelpModalLabel">
+                    <span class="material-symbols-outlined text-lg">help</span>
+                    Справка по кнопкам - Сообщения
+                </h5>
+                <button type="button" class="text-white/70 hover:text-white transition-colors cursor-pointer" onclick="closeHelpModal('messagesHelpModal')" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto" style="flex: 1 1 auto; min-height: 0;">
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Кнопки в заголовке страницы:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[120px] h-7 px-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">download</span>
+                                Перезагрузить медиа
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Перезагрузить медиа</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Перезагружает все медиа файлы (изображения, видео, документы) из каналов Telegram и WhatsApp групп. Используется, если медиа файлы не загрузились или были удалены.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-primary rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">refresh</span>
+                                Обновить
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Обновить</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Обновляет список сообщений из всех подключенных каналов (Telegram и WhatsApp). Загружает новые сообщения и обновляет существующие.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Действия с сообщениями:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[100px] h-7 px-2.5 bg-primary rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">send</span>
+                                Опубликовать
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Опубликовать</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Опубликовывает переписанное сообщение в целевой канал Telegram. Кнопка появляется после выполнения "Рерайт" для сообщения.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm mr-1">edit</span>
+                                Рерайт
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Рерайт</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Переписывает текст сообщения с помощью ChatGPT. Результат отображается в правой части карточки сообщения.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end p-4 border-t border-white/10 flex-shrink-0">
+                <button type="button" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold leading-normal tracking-[0.015em] transition-colors" onclick="closeHelpModal('messagesHelpModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal for Channels Tab -->
+<div class="modal fade" id="channelsHelpModal" tabindex="-1" aria-labelledby="channelsHelpModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h5 class="text-white text-base font-bold leading-tight tracking-[-0.015em] flex items-center gap-2" id="channelsHelpModalLabel">
+                    <span class="material-symbols-outlined text-lg">help</span>
+                    Справка по кнопкам - Каналы
+                </h5>
+                <button type="button" class="text-white/70 hover:text-white transition-colors cursor-pointer" onclick="closeHelpModal('channelsHelpModal')" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto" style="flex: 1 1 auto; min-height: 0;">
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Форма добавления канала:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="py-3">
+                            <strong class="text-white text-xs font-bold leading-tight block mb-1">Платформа</strong>
+                            <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Выберите платформу для мониторинга: Telegram или WhatsApp.</p>
+                        </div>
+                        <div class="py-3">
+                            <strong class="text-white text-xs font-bold leading-tight block mb-1">Ссылка или Username</strong>
+                            <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Введите ссылку на канал (например, https://t.me/channel) или username (например, @channel). Для WhatsApp групп укажите ID группы.</p>
+                        </div>
+                        <div class="py-3">
+                            <strong class="text-white text-xs font-bold leading-tight block mb-1">Тип</strong>
+                            <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Источник (Source) - канал для мониторинга и получения сообщений. Целевой (Target) - канал для публикации переписанных сообщений.</p>
+                        </div>
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center min-w-[84px] h-7 px-2.5 bg-primary rounded-lg text-white text-[10px] font-bold leading-normal tracking-[0.015em] flex-shrink-0" disabled>
+                                Добавить
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Кнопка "Добавить"</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Добавляет новый канал в список для мониторинга или публикации.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-white text-sm font-bold leading-tight mb-3">Действия с каналами в списке:</h6>
+                    <div class="flex flex-col divide-y divide-white/10 gap-0">
+                        <div class="flex items-start gap-3 py-3">
+                            <button class="flex items-center justify-center w-8 h-8 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 flex-shrink-0" disabled>
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                            <div class="flex-1">
+                                <strong class="text-white text-xs font-bold leading-tight block mb-1">Удалить канал</strong>
+                                <p class="text-white/80 text-[10px] font-normal leading-normal mb-0">Удаляет канал из списка. Канал перестанет мониториться, но ранее загруженные сообщения останутся в базе данных.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end p-4 border-t border-white/10 flex-shrink-0">
+                <button type="button" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-7 px-2.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold leading-normal tracking-[0.015em] transition-colors" onclick="closeHelpModal('channelsHelpModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tournament Draft Modal -->
+<div class="modal fade" id="tournamentDraftModal" tabindex="-1" aria-labelledby="tournamentDraftModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h5 class="text-white text-base font-bold leading-tight tracking-[-0.015em] flex items-center gap-2" id="tournamentDraftModalLabel">
+                    <span class="material-symbols-outlined text-lg">sports_soccer</span>
+                    Анализ турнира - Черновик
+                </h5>
+                <button type="button" class="text-white/70 hover:text-white transition-colors cursor-pointer" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto" style="flex: 1 1 auto; min-height: 0;">
+                <div>
+                    <label class="block text-white/80 text-sm font-medium mb-2">Черновик информации о турнире</label>
+                    <textarea id="tournamentDraftText" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm focus:ring-primary focus:border-primary" rows="15" 
+                        placeholder="Здесь будет отображаться извлеченная информация о турнире..."></textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 p-4 border-t border-white/10 flex-shrink-0">
+                <button type="button" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-white/10 hover:bg-white/20 text-white text-xs font-bold leading-normal tracking-[0.015em] transition-colors" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-primary text-white text-xs font-bold leading-normal tracking-[0.015em] hover:bg-primary/80 transition-colors" id="processTournamentDraftBtn" onclick="if(typeof processTournamentDraft === 'function') processTournamentDraft(); else alert('Функция загружается...');">
+                    <span class="material-symbols-outlined text-sm mr-1">auto_awesome</span>
+                    Обработать и создать турнир
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Selection Modal for Loading Collected Contacts -->
+<div class="modal fade" id="loadContactsGroupModal" tabindex="-1" aria-labelledby="loadContactsGroupModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden" style="display: flex; flex-direction: column; max-width: 500px;">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h5 class="text-white text-base font-bold leading-tight tracking-[-0.015em] flex items-center gap-2" id="loadContactsGroupModalLabel">
+                    <span class="material-symbols-outlined text-lg">group_add</span>
+                    Выберите группу для загрузки контактов
+                </h5>
+                <button type="button" class="text-white/70 hover:text-white transition-colors cursor-pointer" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto" style="flex: 1 1 auto; min-height: 0;">
+                <!-- Group Selection -->
+                <div>
+                    <label for="loadContactsGroupSelect" class="block text-white/80 text-sm font-medium mb-2">
+                        Группа <span class="text-red-400">*</span>
+                    </label>
+                    <select class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-colors" id="loadContactsGroupSelect" required>
+                        <option value="" class="bg-background-dark">Выберите группу</option>
+                    </select>
+                    <small class="text-white/60 text-xs mt-1 block">Обязательно выберите группу для загрузки контактов</small>
+                </div>
+                
+                <!-- Divider -->
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 h-px bg-white/10"></div>
+                    <span class="text-white/60 text-xs font-medium">или</span>
+                    <div class="flex-1 h-px bg-white/10"></div>
+                </div>
+                
+                <!-- New Group Creation -->
+                <div>
+                    <label for="newGroupNameForLoad" class="block text-white/80 text-sm font-medium mb-2">
+                        Создать новую группу
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" 
+                            class="flex-1 bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-colors placeholder:text-white/40" 
+                            id="newGroupNameForLoad" 
+                            placeholder="Введите название новой группы">
+                        <button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors gap-1.5" 
+                            type="button" 
+                            onclick="createNewGroupForLoad()">
+                            <span class="material-symbols-outlined text-base">add</span>
+                            <span>Создать</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-2 p-4 border-t border-white/10 flex-shrink-0">
+                <button type="button" 
+                    class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors" 
+                    data-bs-dismiss="modal">
+                    Отмена
+                </button>
+                <button type="button" 
+                    class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-white text-sm font-medium hover:bg-primary/80 transition-colors gap-1.5" 
+                    onclick="confirmLoadContacts()">
+                    <span class="material-symbols-outlined text-base">download</span>
+                    <span>Загрузить</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Tournament Modal -->
+<div class="modal fade" id="createTournamentModal" tabindex="-1" aria-labelledby="createTournamentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content bg-background-dark border border-white/10">
+            <div class="modal-header border-b border-white/10">
+                <h5 class="modal-title text-white text-lg font-bold" id="createTournamentModalLabel">Создать турнир</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="createTournamentForm">
+                    <!-- Заголовок -->
+                    <div class="mb-3">
+                        <label for="tournamentTitle" class="form-label text-white/80 text-sm font-medium">Заголовок турнира <span class="text-red-400">*</span></label>
+                        <input type="text" class="form-control bg-black/40 border border-white/30 text-white placeholder-white/50" id="tournamentTitle" 
+                               required minlength="10" maxlength="120" 
+                               placeholder="Введите заголовок турнира (10-120 символов)"
+                               style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                        <div class="form-text text-white/50 text-xs">
+                            <span id="titleCharCount">0</span>/120 символов
+                        </div>
+                    </div>
+
+                    <!-- Краткое описание -->
+                    <div class="mb-3">
+                        <label for="tournamentShortDescription" class="form-label text-white/80 text-sm font-medium">Краткое описание (анонс)</label>
+                        <textarea class="form-control bg-black/40 border border-white/30 text-white placeholder-white/50" id="tournamentShortDescription" 
+                                  rows="3" minlength="50" maxlength="400"
+                                  placeholder="Краткое описание для анонса (50-400 символов)"
+                                  style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;"></textarea>
+                        <div class="form-text text-white/50 text-xs">
+                            <span id="shortDescCharCount">0</span>/400 символов
+                        </div>
+                    </div>
+
+                    <!-- Основной текст -->
+                    <div class="mb-3">
+                        <label for="tournamentBody" class="form-label text-white/80 text-sm font-medium">Основной текст турнира <span class="text-red-400">*</span></label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-white/50 text-xs">Поддерживается Markdown</small>
+                            <button type="button" class="btn btn-sm btn-outline-secondary text-white/60 border-white/20" id="toggleMarkdownPreview" onclick="toggleTournamentMarkdownPreview()">
+                                <i class="bi bi-code"></i> Предпросмотр
+                            </button>
+                        </div>
+                        <textarea class="form-control bg-black/40 border border-white/30 text-white font-mono placeholder-white/50" id="tournamentBody" 
+                                  rows="10" required maxlength="15000"
+                                  placeholder="Основной текст турнира (Markdown поддерживается)"
+                                  style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;"></textarea>
+                        <div id="tournamentBodyPreview" class="mt-2 p-3 bg-black/30 border border-white/10 rounded text-white hidden"></div>
+                        <div class="form-text text-white/50 text-xs">
+                            <span id="bodyCharCount">0</span>/15000 символов
+                        </div>
+                    </div>
+
+                    <!-- Загрузка изображений -->
+                    <div class="mb-3">
+                        <label class="form-label text-white/80 text-sm font-medium">Изображения</label>
+                        <div class="row g-3">
+                            <!-- Оригинальное изображение -->
+                            <div class="col-md-4">
+                                <label for="tournamentImageOriginal" class="form-label text-white/60 text-xs">Оригинальное изображение</label>
+                                <input type="file" class="form-control form-control-sm bg-black/20 border border-white/20 text-white" 
+                                       id="tournamentImageOriginal" accept="image/jpeg,image/jpg,image/png">
+                                <div id="originalImagePreview" class="mt-2"></div>
+                            </div>
+                            <!-- Обложка 16:9 -->
+                            <div class="col-md-4">
+                                <label for="tournamentImage16x9" class="form-label text-white/60 text-xs">Обложка 16:9 (1600×900)</label>
+                                <input type="file" class="form-control form-control-sm bg-black/20 border border-white/20 text-white" 
+                                       id="tournamentImage16x9" accept="image/jpeg,image/jpg,image/png">
+                                <div id="image16x9Preview" class="mt-2"></div>
+                                <small class="text-white/40 text-xs">Или будет сгенерировано из оригинала</small>
+                            </div>
+                            <!-- Квадратная обложка -->
+                            <div class="col-md-4">
+                                <label for="tournamentImageSquare" class="form-label text-white/60 text-xs">Квадратная обложка (1080×1080)</label>
+                                <input type="file" class="form-control form-control-sm bg-black/20 border border-white/20 text-white" 
+                                       id="tournamentImageSquare" accept="image/jpeg,image/jpg,image/png">
+                                <div id="imageSquarePreview" class="mt-2"></div>
+                                <small class="text-white/40 text-xs">Или будет сгенерировано из оригинала</small>
+                            </div>
+                        </div>
+                        <div class="form-text text-white/50 text-xs mt-1">
+                            Формат: JPG/PNG, до 15 МБ. Рекомендуемые размеры: 16:9 - 1600×900, квадрат - 1080×1080
+                        </div>
+                    </div>
+
+                    <!-- Настройки публикации -->
+                    <div class="mb-3">
+                        <label class="form-label text-white/80 text-sm font-medium">Настройки публикации</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="publishToTeletype">
+                            <label class="form-check-label text-white/70 text-sm" for="publishToTeletype">
+                                Публиковать в Teletype
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="publishToTelegram">
+                            <label class="form-check-label text-white/70 text-sm" for="publishToTelegram">
+                                Публиковать в Telegram
+                            </label>
+                        </div>
+                        <div class="mb-2" id="telegramChatSelectContainer" style="display: none;">
+                            <label for="telegramChatId" class="form-label text-white/60 text-xs">Telegram канал/группа</label>
+                            <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                   id="telegramChatId" placeholder="ID канала или группы"
+                                   style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                        </div>
+                    </div>
+
+                    <!-- Автоизвлечение данных -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label text-white/80 text-sm font-medium">Автоизвлечение данных турнира</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="extractTournamentDataBtn" onclick="extractTournamentData()">
+                                <i class="bi bi-magic"></i> Извлечь данные
+                            </button>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="extractedCity" class="form-label text-white/60 text-xs">Город проведения</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedCity" placeholder="Будет извлечено автоматически"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedRegion" class="form-label text-white/60 text-xs">Регион проведения</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedRegion" placeholder="Будет извлечено автоматически"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedStartDate" class="form-label text-white/60 text-xs">Дата начала турнира</label>
+                                <input type="date" class="form-control form-control-sm bg-black/40 border border-white/30 text-white" 
+                                       id="extractedStartDate"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedEndDate" class="form-label text-white/60 text-xs">Дата окончания турнира</label>
+                                <input type="date" class="form-control form-control-sm bg-black/40 border border-white/30 text-white" 
+                                       id="extractedEndDate"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedBirthYears" class="form-label text-white/60 text-xs">Года рождения участников</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedBirthYears" placeholder="Например: 2010, 2011, 2012"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedFormat" class="form-label text-white/60 text-xs">Формат турнира</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedFormat" placeholder="Например: 11x11, 8+1, 7+1"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedEntryFee" class="form-label text-white/60 text-xs">Взнос за участие</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedEntryFee" placeholder="Например: 5000 руб."
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="extractedOrganizer" class="form-label text-white/60 text-xs">Организатор</label>
+                                <input type="text" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedOrganizer" placeholder="Название или ФИО организатора"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                            <div class="col-md-12">
+                                <label for="extractedContact" class="form-label text-white/60 text-xs">Контактный номер телефона</label>
+                                <input type="tel" class="form-control form-control-sm bg-black/40 border border-white/30 text-white placeholder-white/50" 
+                                       id="extractedContact" placeholder="+7 (XXX) XXX-XX-XX"
+                                       style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            </div>
+                        </div>
+                        <div class="form-text text-white/50 text-xs mt-2">
+                            <i class="bi bi-info-circle"></i> Нажмите "Извлечь данные" для автоматического заполнения полей на основе введенного текста
+                        </div>
+                    </div>
+
+                    <!-- Статус -->
+                    <div class="mb-3">
+                        <label for="tournamentStatus" class="form-label text-white/80 text-sm font-medium">Статус</label>
+                        <select class="form-select bg-black/40 border border-white/30 text-white" id="tournamentStatus"
+                                style="color: #ffffff !important; background-color: rgba(0,0,0,0.4) !important;">
+                            <option value="draft">Черновик</option>
+                            <option value="ready_for_publish">Готов к публикации</option>
+                            <option value="published">Опубликован</option>
+                            <option value="archived">Архивирован</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-t border-white/10">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-outline-primary" onclick="saveTournamentDraft()">Сохранить черновик</button>
+                <button type="button" class="btn btn-primary" onclick="saveAndPublishTournament()">Сохранить и опубликовать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Gallery Modal -->
+<div id="imageGalleryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 backdrop-blur-sm" style="display: none;">
+    <div class="relative w-full h-full flex flex-col items-center justify-center p-4">
+        <!-- Close button -->
+        <button id="galleryCloseBtn" class="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+        
+        <!-- Download button -->
+        <button id="galleryDownloadBtn" class="absolute top-4 right-16 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all" title="Скачать изображение">
+            <span class="material-symbols-outlined text-2xl">download</span>
+        </button>
+        
+        <!-- Navigation buttons -->
+        <button id="galleryPrevBtn" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
+            <span class="material-symbols-outlined text-3xl">chevron_left</span>
+        </button>
+        <button id="galleryNextBtn" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
+            <span class="material-symbols-outlined text-3xl">chevron_right</span>
+        </button>
+        
+        <!-- Image counter -->
+        <div id="galleryCounter" class="absolute top-4 left-4 z-10 px-3 py-1.5 bg-white/10 rounded-full text-white text-sm font-medium">
+            <span id="galleryCurrentIndex">1</span> / <span id="galleryTotalCount">1</span>
+        </div>
+        
+        <!-- Image container -->
+        <div class="flex items-center justify-center w-full h-full max-w-7xl max-h-[90vh]">
+            <img id="galleryImage" src="" alt="Gallery image" class="max-w-full max-h-full object-contain rounded-lg">
+        </div>
+    </div>
+</div>
+
+<!-- Create Group Modal -->
+<div id="createGroupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div class="bg-gray-900 border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-white text-lg font-bold">Создать новую группу</h3>
+            <button onclick="closeCreateGroupModal()" class="text-white/60 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="createGroupForm" onsubmit="submitCreateGroup(event)">
+            <div class="mb-4">
+                <label class="block text-white/80 text-sm font-medium mb-2" for="newGroupName">Название группы</label>
+                <input type="text" id="newGroupName" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Введите название группы" required>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeCreateGroupModal()" class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold rounded-lg transition-colors">
+                    Отмена
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary hover:bg-primary/80 text-white text-sm font-bold rounded-lg transition-colors">
+                    Создать
+                </button>
+            </div>
+        </form>
+        <div id="createGroupMessage" class="mt-3 hidden"></div>
+    </div>
+</div>
+
+<script>
+// Create Group Modal Functions
+function openCreateGroupModal() {
+    document.getElementById('createGroupModal').classList.remove('hidden');
+    document.getElementById('createGroupModal').classList.add('flex');
+    document.getElementById('newGroupName').focus();
+}
+
+function closeCreateGroupModal() {
+    document.getElementById('createGroupModal').classList.add('hidden');
+    document.getElementById('createGroupModal').classList.remove('flex');
+    document.getElementById('newGroupName').value = '';
+    document.getElementById('createGroupMessage').classList.add('hidden');
+}
+
+async function submitCreateGroup(event) {
+    event.preventDefault();
+    const groupName = document.getElementById('newGroupName').value.trim();
+    const messageDiv = document.getElementById('createGroupMessage');
+    
+    if (!groupName) {
+        messageDiv.innerHTML = '<p class="text-red-400 text-sm">Введите название группы</p>';
+        messageDiv.classList.remove('hidden');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/groups/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: groupName })
+        });
+        
+        if (response.ok) {
+            messageDiv.innerHTML = '<p class="text-green-400 text-sm">Группа успешно создана!</p>';
+            messageDiv.classList.remove('hidden');
+            
+            // Refresh group selects
+            if (typeof loadGroups === 'function') loadGroups();
+            
+            setTimeout(() => {
+                closeCreateGroupModal();
+            }, 1000);
+        } else {
+            const error = await response.json();
+            messageDiv.innerHTML = `<p class="text-red-400 text-sm">${error.detail || 'Ошибка создания группы'}</p>`;
+            messageDiv.classList.remove('hidden');
+        }
+    } catch (error) {
+        messageDiv.innerHTML = '<p class="text-red-400 text-sm">Ошибка соединения с сервером</p>';
+        messageDiv.classList.remove('hidden');
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('createGroupModal').classList.contains('hidden')) {
+        closeCreateGroupModal();
+    }
+});
+
+// Show selected file name
+function showSelectedFileName(input) {
+    const fileNameEl = document.getElementById('selectedFileName');
+    if (input.files && input.files[0]) {
+        fileNameEl.textContent = '📄 ' + input.files[0].name;
+        fileNameEl.classList.remove('hidden');
+    } else {
+        fileNameEl.classList.add('hidden');
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4">Вход в Telegram</h3>
+
+                <div id="step1">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Номер телефона</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+79991234567"
+                            value="{{ phone or '' }}">
+                        <div class="form-text">В международном формате</div>
+                    </div>
+                    <button id="requestCodeBtn" class="btn btn-primary w-100">Получить код</button>
+                </div>
+
+                <div id="step2" class="d-none">
+                    <div class="alert alert-info py-2">Код отправлен на <span id="displayPhone" class="fw-bold"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Код подтверждения</label>
+                        <input type="text" class="form-control" id="code" placeholder="12345">
+                    </div>
+                    <button id="loginBtn" class="btn btn-success w-100">Войти</button>
+                    <button id="backBtn" class="btn btn-link w-100 mt-2">Назад</button>
+                </div>
+
+                <div id="step3" class="d-none">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Облачный пароль (2FA)</label>
+                        <input type="password" class="form-control" id="password">
+                    </div>
+                    <button id="passwordBtn" class="btn btn-warning w-100">Подтвердить пароль</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

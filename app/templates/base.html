@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html class="dark" lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' 'inline-speculation-rules' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com chrome-extension://* data:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:;">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📱%3C/text%3E%3C/svg%3E">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <title>Мониторинг - Панель управления</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        .glassmorphic {
+            background-color: rgba(16, 28, 34, 0.6);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 76, 84, 0.5);
+        }
+        /* Remove backdrop for modals */
+        .modal-backdrop {
+            display: none !important;
+        }
+        /* Ensure modal is visible and centered */
+        .modal.show {
+            display: block !important;
+        }
+        .modal.show .modal-dialog {
+            margin: 1.75rem auto;
+        }
+        /* Help modal styling - ensure proper display */
+        #contactsHelpModal .modal-dialog,
+        #messagesHelpModal .modal-dialog,
+        #channelsHelpModal .modal-dialog {
+            max-width: 800px;
+        }
+        /* Ensure help modal content is visible */
+        #contactsHelpModal.show,
+        #messagesHelpModal.show,
+        #channelsHelpModal.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Help modal scrollable content */
+        #contactsHelpModal .modal-content,
+        #messagesHelpModal .modal-content,
+        #channelsHelpModal .modal-content {
+            overflow: hidden;
+        }
+        #contactsHelpModal .modal-content > div:not(:first-child):not(:last-child),
+        #messagesHelpModal .modal-content > div:not(:first-child):not(:last-child),
+        #channelsHelpModal .modal-content > div:not(:first-child):not(:last-child) {
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Ensure contact modal tabs work correctly */
+        #contactModalContent .tab-pane:not(.show):not(.active) {
+            display: none !important;
+        }
+        #contactModalContent .tab-pane.show,
+        #contactModalContent .tab-pane.active {
+            display: block !important;
+        }
+        /* Contacts table grid layout */
+        #contactsListBody tr,
+        #contactsListBody tr td {
+            vertical-align: baseline;
+        }
+        /* Ensure table fits container without horizontal scroll */
+        table[style*="table-layout: fixed"] {
+            width: 100% !important;
+        }
+        /* Prevent overflow in table cells */
+        #contactsListBody tr td {
+            overflow: hidden;
+        }
+        /* Phone column - left aligned, single vertical line */
+        #contactsListBody tr td:nth-child(4) {
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Channel tabs - prevent text wrapping */
+        #channelTabs {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            flex-wrap: nowrap;
+        }
+        /* Markdown preview styling */
+        #contactInsightSummaryPreview {
+            line-height: 1.6;
+        }
+        #contactInsightSummaryPreview h1,
+        #contactInsightSummaryPreview h2,
+        #contactInsightSummaryPreview h3,
+        #contactInsightSummaryPreview h4,
+        #contactInsightSummaryPreview h5,
+        #contactInsightSummaryPreview h6 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: white;
+        }
+        #contactInsightSummaryPreview h1 { font-size: 1.25rem; }
+        #contactInsightSummaryPreview h2 { font-size: 1.125rem; }
+        #contactInsightSummaryPreview h3 { font-size: 1rem; }
+        #contactInsightSummaryPreview p {
+            margin-bottom: 0.5rem;
+        }
+        #contactInsightSummaryPreview ul,
+        #contactInsightSummaryPreview ol {
+            margin-left: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #contactInsightSummaryPreview li {
+            margin-bottom: 0.25rem;
+        }
+        #contactInsightSummaryPreview strong {
+            font-weight: 600;
+            color: white;
+        }
+        #contactInsightSummaryPreview em {
+            font-style: italic;
+        }
+        #contactInsightSummaryPreview a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        #contactInsightSummaryPreview a:hover {
+            color: #60a5fa;
+        }
+        #contactInsightSummaryPreview code {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        /* Image Gallery Modal Styles */
+        #imageGalleryModal {
+            z-index: 9999;
+        }
+        #imageGalleryModal img {
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        #galleryImage {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #galleryPrevBtn,
+        #galleryNextBtn {
+            opacity: 0.7;
+        }
+        #galleryPrevBtn:hover,
+        #galleryNextBtn:hover {
+            opacity: 1;
+        }
+        #galleryCloseBtn:hover,
+        #galleryDownloadBtn:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+        }
+        #contactInsightSummaryPreview pre {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+            margin-bottom: 0.5rem;
+        }
+        #contactInsightSummaryPreview blockquote {
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+            padding-left: 0.75rem;
+            margin-left: 0.5rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        #contactInsightSummaryPreview hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 0.75rem 0;
+        }
+        #channelTabs button {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        /* Spinner animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        /* Author info button styles */
+        .author-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .author-info-button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 11px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s;
+        }
+        .author-info-button:hover {
+            border-color: #fff;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .author-info-button.hidden {
+            display: none !important;
+        }
+        
+        /* News feed container - stretch to bottom of screen */
+        /* Calculate header height more accurately: 
+           - padding top: 32px (p-8 = 2rem = 32px)
+           - header section with buttons: ~60px
+           - tabs section: ~50px
+           - margins: ~12px
+           Total: ~154px */
+        :root {
+            --header-height: 154px;
+        }
+        
+        /* Main messages tab container - make it flex to allow child stretching */
+        #messages.tab-pane {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        
+        /* News feed container - stretch to bottom of screen */
+        #channelTabsContent {
+            /* Растягиваем контейнер во всю высоту доступного экрана */
+            min-height: calc(100vh - var(--header-height)) !important;
+            height: calc(100vh - var(--header-height)) !important;
+            max-height: calc(100vh - var(--header-height)) !important;
+            /* Чтобы блок не выглядел обрезанным */
+            display: flex !important;
+            flex-direction: column !important;
+            /* Внутренний скролл */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+        }
+        
+        /* Tab panes inside channelTabsContent should also stretch */
+        #channelTabsContent .tab-pane,
+        #all-messages.tab-pane {
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 100% !important;
+            height: 100% !important;
+            flex: 1 1 auto !important;
+            overflow: hidden !important;
+        }
+        
+        /* Message containers should fill available space - ensure consistent styling */
+        /* Target all message containers: both "all messages" and individual channels */
+        #allMessagesList,
+        #channelTabsContent [data-channel-id],
+        #channelTabsContent .tab-pane > div.flex.flex-col,
+        #channelTabsContent .tab-pane.active [data-channel-id],
+        #channelTabsContent .tab-pane.show [data-channel-id] {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            gap: 0.75rem !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* Ensure active tab panes are visible and properly styled */
+        /* Override Bootstrap's display: none for inactive tabs */
+        #channelTabsContent .tab-pane:not(.show):not(.active) {
+            display: none !important;
+        }
+        #channelTabsContent .tab-pane.active,
+        #channelTabsContent .tab-pane.show {
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 100% !important;
+            height: 100% !important;
+            flex: 1 1 auto !important;
+            overflow: hidden !important;
+        }
+        
+        /* Force display for channel tab panes when they have show/active classes */
+        #channelTabsContent .tab-pane[id^="channel-"].show,
+        #channelTabsContent .tab-pane[id^="channel-"].active {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
+        /* Ensure all main tab panes (channels, contacts, etc.) are visible when active */
+        /* Default: hide all tab panes except the first one (messages) */
+        .tab-pane:not(.active):not(.show) {
+            display: none !important;
+        }
+        /* Show active tab panes */
+        .tab-pane.active,
+        .tab-pane.show {
+            display: block !important;
+        }
+        /* But keep flex layout for messages tab */
+        #messages.tab-pane.active,
+        #messages.tab-pane.show {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        /* Ensure channels, contacts, tournaments, group-data tabs are visible when active */
+        #channels.tab-pane.active,
+        #channels.tab-pane.show,
+        #contacts.tab-pane.active,
+        #contacts.tab-pane.show,
+        #tournaments.tab-pane.active,
+        #tournaments.tab-pane.show,
+        #group-data.tab-pane.active,
+        #group-data.tab-pane.show {
+            display: block !important;
+        }
+        
+        /* Force consistent styling for all message containers regardless of when they're created */
+        div[data-channel-id],
+        div#allMessagesList {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            gap: 0.75rem !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* Custom Select Dropdown Styling */
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            padding-right: 2.5rem !important;
+        }
+        
+        select:focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%230b95da' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+        
+        /* Style for select elements with dark background */
+        select.bg-black\/20,
+        select[class*="bg-black"] {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+            color: white !important;
+        }
+        
+        /* Custom option styling - скругление для выпадающего списка */
+        select option {
+            background-color: rgba(16, 28, 34, 0.95) !important;
+            color: white !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 0.5rem !important;
+            margin: 0.125rem 0 !important;
+        }
+        
+        /* Hover state for options */
+        select option:hover,
+        select option:checked,
+        select option:focus {
+            background-color: rgba(11, 149, 218, 0.3) !important;
+            color: white !important;
+        }
+        
+        /* Style for select in modals and forms */
+        select.rounded-lg,
+        select[class*="rounded"] {
+            border-radius: 0.5rem !important;
+        }
+        
+        /* Ensure select dropdown list has rounded corners */
+        select:focus {
+            outline: none;
+            border-color: #0b95da !important;
+            box-shadow: 0 0 0 3px rgba(11, 149, 218, 0.1) !important;
+        }
+        
+        /* Custom styling for form-select (Bootstrap) */
+        select.form-select {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            border-radius: 0.5rem !important;
+        }
+        
+        select.form-select:focus {
+            border-color: #0b95da !important;
+            box-shadow: 0 0 0 3px rgba(11, 149, 218, 0.1) !important;
+            background-color: rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* Ensure all select elements have consistent styling */
+        select {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        select:hover {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0b95da",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101c22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <!-- Bootstrap для совместимости с существующим кодом -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="relative w-full group/design-root">
+        <!-- Background gradient effects -->
+        <div class="fixed inset-0 z-0 h-screen w-screen bg-background-light dark:bg-background-dark">
+            <div class="absolute bottom-0 left-[-20%] right-0 top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(255,0,182,.15),rgba(255,255,255,0))]"></div>
+            <div class="absolute bottom-[-10%] right-0 top-[-20%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(0,123,255,.15),rgba(255,255,255,0))]"></div>
+        </div>
+        
+        <div class="relative flex h-screen">
+            <!-- Sidebar -->
+            <aside class="flex w-64 flex-col bg-black/10 backdrop-blur-sm p-4 border-r border-white/10 flex-shrink-0 z-10">
+                <div class="flex flex-col grow">
+                    <div class="flex items-center gap-2 mb-8">
+                        <div class="bg-primary rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.38 15.84 14.22 15.51 15.99C15.37 16.74 15.09 16.99 14.83 17.02C14.25 17.07 13.81 16.64 13.25 16.27C12.37 15.69 11.87 15.33 11.02 14.77C10.03 14.12 10.67 13.76 11.24 13.18C11.39 13.03 14.95 9.7 15.08 9.37C15.1 9.32 15.12 9.16 15.08 9.05C15.04 8.94 14.94 8.97 14.86 8.99C14.73 9.02 13.18 10.04 9.89 12.08C9.28 12.47 8.72 12.66 8.22 12.65C7.67 12.64 6.6 12.36 5.81 12.12C4.84 11.82 4.08 11.66 4.13 11.15C4.15 10.93 4.4 10.71 4.9 10.48C7.31 9.3 9.12 8.47 10.33 7.99C12.76 7.01 13.75 6.65 14.11 6.65C14.2 6.65 14.37 6.68 14.49 6.78C14.59 6.87 14.62 6.98 14.64 7.07C14.65 7.15 14.67 7.31 14.65 7.43C14.63 7.55 14.6 7.59 14.58 7.6C14.55 7.61 14.52 7.62 14.49 7.62Z" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <h1 class="text-white text-xs font-semibold leading-tight">Мониторинг</h1>
+                            <p class="text-white/60 text-[10px] font-normal leading-tight">Панель управления</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <!-- Dashboard temporarily hidden -->
+                        <!-- <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="#" onclick="showTab('dashboard-tab', event); return false;">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            <p class="text-sm font-medium leading-normal">Дашборд</p>
+                        </a> -->
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/messages" onclick="return showTab('messages-tab', event);">
+                            <span class="material-symbols-outlined">chat_bubble</span>
+                            <p class="text-sm font-medium leading-normal">Сообщения</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/channels" onclick="return showTab('channels-tab', event);" id="channels-nav-link">
+                            <span class="material-symbols-outlined">tag</span>
+                            <p class="text-sm font-medium leading-normal">Каналы</p>
+                        </a>
+                        <!-- <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="#" onclick="showTab('whatsapp-tab', event); return false;">
+                            <span class="material-symbols-outlined">chat</span>
+                            <p class="text-sm font-medium leading-normal">WhatsApp</p>
+                        </a> -->
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/contacts" onclick="return showTab('contacts-tab', event);">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">contacts</span>
+                            <p class="text-sm font-medium leading-normal">Контакты</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/tournaments" onclick="return showTab('tournaments-tab', event);">
+                            <span class="material-symbols-outlined">emoji_events</span>
+                            <p class="text-sm font-medium leading-normal">Турниры</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/group-data" onclick="return showTab('group-data-tab', event);">
+                            <span class="material-symbols-outlined">group</span>
+                            <p class="text-sm font-medium leading-normal">Сбор данных</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/admin">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            <p class="text-sm font-medium leading-normal">Админ Панель</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" href="#" onclick="openHelpForCurrentTab(); return false;">
+                        <span class="material-symbols-outlined">help</span>
+                        <p class="text-sm font-medium leading-normal">Справка</p>
+                    </a>
+                    <div class="flex items-center gap-2 px-3 py-2">
+                        <span id="connectionStatus" class="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400">Отключено</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto relative z-10 flex flex-col">
+                <div class="p-8 flex-1 flex flex-col min-h-0" style="height: 100%;">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        const tabSlugToIdMap = {
+            "messages": "messages-tab",
+            "channels": "channels-tab",
+            "contacts": "contacts-tab",
+            "tournaments": "tournaments-tab",
+            "group-data": "group-data-tab"
+        };
+        const serverInitialTabSlug = "{{ initial_tab or '' }}";
+        function resolveTabUrl(slug) {
+            if (!slug) return "/";
+            if (slug === "messages") return "/messages";
+            if (slug === "channels") return "/channels";
+            if (slug === "contacts") return "/contacts";
+            if (slug === "tournaments") return "/tournaments";
+            if (slug === "group-data") return "/group-data";
+            return `/?tab=${slug}`;
+        }
+
+        function showTab(tabId, event) {
+            console.log('showTab called with:', tabId, event);
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('aside nav a').forEach(a => {
+                a.classList.remove('bg-primary/30', 'text-white');
+                a.classList.add('text-white/70');
+            });
+            
+            // Add active class to clicked item - try multiple ways to find it
+            let clickedLink = null;
+            if (event && event.currentTarget) {
+                clickedLink = event.currentTarget;
+            } else if (event && event.target) {
+                clickedLink = event.target.closest('a');
+            }
+            
+            if (!clickedLink) {
+                // Try to find by onclick attribute
+                clickedLink = document.querySelector(`aside nav a[onclick*="${tabId}"]`);
+            }
+            if (!clickedLink) {
+                // Try to find by data-tab-id
+                clickedLink = document.querySelector(`aside nav a[data-tab-id="${tabId}"]`);
+            }
+            
+            if (clickedLink) {
+                clickedLink.classList.add('bg-primary/30', 'text-white');
+                clickedLink.classList.remove('text-white/70');
+            }
+            
+            // Show corresponding tab
+            // Map tab IDs to actual tab pane IDs
+            const tabIdMap = {
+                'dashboard-tab': 'dashboard',
+                'messages-tab': 'messages',
+                'channels-tab': 'channels',
+                'whatsapp-tab': 'whatsapp',
+                'contacts-tab': 'contacts',
+                'tournaments-tab': 'tournaments',
+                'group-data-tab': 'group-data'
+            };
+            const actualTabId = tabIdMap[tabId] || tabId.replace('-tab', '');
+            const tabContainerExists = document.getElementById('myTabContent');
+            if (!tabContainerExists) {
+                const targetUrl = resolveTabUrl(actualTabId);
+                console.log('Tab container not found, redirecting to', targetUrl);
+                window.location.href = targetUrl;
+                return false;
+            }
+            console.log('showTab called:', { tabId, actualTabId });
+            const tabPane = document.getElementById(actualTabId);
+            console.log('tabPane found:', tabPane);
+            if (tabPane) {
+                // Hide all tabs - use both class removal and style to ensure they're hidden
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                    pane.style.setProperty('display', 'none', 'important');
+                });
+                
+                // Show selected tab
+                tabPane.classList.add('show', 'active');
+                tabPane.classList.remove('fade'); // Remove fade class to show immediately
+                // Force display for all tabs except messages (which uses flex)
+                // Use !important to override CSS rules
+                if (actualTabId === 'messages') {
+                    tabPane.style.setProperty('display', 'flex', 'important');
+                    tabPane.style.setProperty('flex-direction', 'column', 'important');
+                } else {
+                    tabPane.style.setProperty('display', 'block', 'important');
+                    tabPane.style.setProperty('visibility', 'visible', 'important');
+                    tabPane.style.setProperty('opacity', '1', 'important');
+                    tabPane.style.setProperty('position', 'relative', 'important');
+                    tabPane.style.setProperty('z-index', '1', 'important');
+                }
+                console.log('Tab displayed:', actualTabId, tabPane.style.display, tabPane.style.visibility);
+                // Also set in setTimeout as backup
+                setTimeout(() => {
+                    if (actualTabId === 'messages') {
+                        tabPane.style.setProperty('display', 'flex', 'important');
+                        tabPane.style.setProperty('flex-direction', 'column', 'important');
+                    } else {
+                        tabPane.style.setProperty('display', 'block', 'important');
+                        tabPane.style.setProperty('visibility', 'visible', 'important');
+                        tabPane.style.setProperty('opacity', '1', 'important');
+                        tabPane.style.setProperty('position', 'relative', 'important');
+                        tabPane.style.setProperty('z-index', '1', 'important');
+                    }
+                    console.log('Tab display set in setTimeout:', actualTabId, tabPane.style.display, tabPane.style.visibility);
+                }, 10);
+                
+                // Update Bootstrap tab button if exists
+                const tabButton = document.querySelector(`button[data-bs-target="#${actualTabId}"]`);
+                if (tabButton && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                    try {
+                        const tab = new bootstrap.Tab(tabButton);
+                        tab.show();
+                    } catch (e) {
+                        // Fallback: just update classes manually
+                        document.querySelectorAll('.nav-link').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        if (tabButton) {
+                            tabButton.classList.add('active');
+                        }
+                    }
+                }
+                
+                // Load dashboard data if dashboard tab is shown
+                if (actualTabId === 'dashboard' && typeof loadDashboardStats === 'function') {
+                    setTimeout(() => {
+                        try {
+                            loadDashboardStats();
+                            loadEngagementChart();
+                            initializePlaceholderCharts();
+                            loadDashboardAlerts();
+                        } catch (e) {
+                            console.error('Error loading dashboard:', e);
+                        }
+                    }, 100);
+                }
+                
+                // Force load messages when messages tab is shown
+                if (actualTabId === 'messages' && typeof loadMessages === 'function') {
+                    setTimeout(() => {
+                        try {
+                            // Check if messages are already loaded or loading
+                            if (window._loadingMessages) {
+                                console.log('Messages already loading, skipping duplicate call');
+                                return;
+                            }
+                            
+                            const channelTabs = document.getElementById('channelTabs');
+                            // Check if channel tabs exist (only individual channel tabs now, no "Все каналы")
+                            const channelTabButtons = channelTabs ? channelTabs.querySelectorAll('button[data-channel-id]') : [];
+                            const hasChannelTabs = channelTabButtons.length > 0; // At least one channel tab
+                            const hasContent = hasChannelTabs;
+                            
+                            // Always load if content is missing or messages not loaded
+                            if (!hasContent || window._messagesLoaded !== true) {
+                                console.log('Messages tab opened - forcing load (hasContent:', hasContent, ', _messagesLoaded:', window._messagesLoaded, ', channelTabs:', channelTabButtons.length, ')');
+                                loadMessages(false).catch(err => {
+                                    console.error('Error loading messages on tab open:', err);
+                                });
+                            } else {
+                                console.log('Messages already loaded, skipping (hasContent:', hasContent, ', channelTabs:', channelTabButtons.length, ')');
+                            }
+                        } catch (e) {
+                            console.error('Error in messages tab load:', e);
+                            // Try to load anyway if there's an error checking
+                            if (typeof loadMessages === 'function') {
+                                loadMessages(false).catch(err => {
+                                    console.error('Error loading messages on tab open (fallback):', err);
+                                });
+                            }
+                        }
+                    }, 200);
+                }
+                
+                // Load channels when channels tab is shown
+                if (actualTabId === 'channels' && typeof loadChannels === 'function') {
+                    setTimeout(() => {
+                        try {
+                            console.log('Channels tab opened - loading channels');
+                            loadChannels().catch(err => {
+                                console.error('Error loading channels on tab open:', err);
+                            });
+                        } catch (e) {
+                            console.error('Error in channels tab load:', e);
+                        }
+                    }, 100);
+                }
+                
+                // Load contacts when contacts tab is shown
+                if (actualTabId === 'contacts') {
+                    // Инициализируем поиск при открытии вкладки контактов
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('searchContacts');
+                        if (searchInput && typeof window.performContactsSearch === 'function') {
+                            // Привязываем обработчик поиска, если он еще не привязан
+                            if (!searchInput.hasAttribute('data-search-initialized')) {
+                                searchInput.setAttribute('data-search-initialized', 'true');
+                                searchInput.addEventListener('input', function(e) {
+                                    const value = e.target.value || '';
+                                    console.log('Search input changed (tab init):', value);
+                                    if (window.performContactsSearch) {
+                                        window.performContactsSearch(value);
+                                    }
+                                });
+                                searchInput.addEventListener('keyup', function(e) {
+                                    const value = e.target.value || '';
+                                    if (window.performContactsSearch) {
+                                        window.performContactsSearch(value);
+                                    }
+                                });
+                                console.log('✅ Search handler initialized on contacts tab open');
+                            }
+                        } else if (searchInput) {
+                            console.warn('⚠️ performContactsSearch function not available');
+                        } else {
+                            console.warn('⚠️ searchContacts input not found');
+                        }
+                    }, 50);
+                    
+                    // Use a flag to prevent multiple calls
+                    if (!window._contactsTabLoading) {
+                        window._contactsTabLoading = true;
+                        setTimeout(() => {
+                            try {
+                                console.log('Contacts tab opened - loading contacts');
+                                // Try to get loadContacts from window, or wait a bit if not available yet
+                                if (typeof window.loadContacts === 'function') {
+                                    window.loadContacts().catch(err => {
+                                        console.error('Error loading contacts on tab open:', err);
+                                    }).finally(() => {
+                                        window._contactsTabLoading = false;
+                                    });
+                                } else {
+                                // Wait a bit more for scripts to load
+                                setTimeout(() => {
+                                    if (typeof window.loadContacts === 'function') {
+                                        window.loadContacts().catch(err => {
+                                            console.error('Error loading contacts on tab open (retry):', err);
+                                        });
+                                    } else {
+                                        console.error('loadContacts function not available after retry');
+                                        window._contactsTabLoading = false;
+                                        // Try to manually trigger contact loading
+                                        const tbody = document.getElementById('contactsListBody');
+                                        if (tbody) {
+                                            tbody.innerHTML = '<tr class="hover:bg-white/5 transition-colors"><td colspan="6" class="px-6 py-4 text-sm text-white/60 text-center">Загрузка контактов...</td></tr>';
+                                            fetch('/contacts/')
+                                                .then(res => res.json())
+                                                .then(contacts => {
+                                                    console.log(`Loaded ${contacts.length} contacts manually`);
+                                                    if (typeof window.loadContacts === 'function') {
+                                                        window.loadContacts();
+                                                    }
+                                                })
+                                                .catch(err => {
+                                                    console.error('Error fetching contacts manually:', err);
+                                                    tbody.innerHTML = '<tr class="hover:bg-white/5 transition-colors"><td colspan="6" class="px-6 py-4 text-sm text-red-500 text-center">Ошибка загрузки контактов</td></tr>';
+                                                })
+                                                .finally(() => {
+                                                    window._contactsTabLoading = false;
+                                                });
+                                        }
+                                    }
+                                }, 200);
+                            }
+                        } catch (e) {
+                            console.error('Error in contacts tab load:', e);
+                            window._contactsTabLoading = false;
+                        }
+                    }, 100);
+                    }
+                }
+                
+                // Load tournaments when tournaments tab is shown
+                if (actualTabId === 'tournaments' && typeof loadTournaments === 'function') {
+                    setTimeout(() => {
+                        try {
+                            console.log('Tournaments tab opened - loading tournaments');
+                            loadTournaments().catch(err => {
+                                console.error('Error loading tournaments on tab open:', err);
+                            });
+                        } catch (e) {
+                            console.error('Error in tournaments tab load:', e);
+                        }
+                    }, 100);
+                }
+                return false;
+            }
+
+            // If tab pane not found (e.g., on detail pages), redirect to dashboard with selected tab
+            const fallbackUrl = resolveTabUrl(actualTabId);
+            console.log('Tab pane missing, redirecting to', fallbackUrl);
+            window.location.href = fallbackUrl;
+            return false;
+        }
+        
+        // Make function globally available
+        window.showTab = showTab;
+        
+        // Also attach event listeners directly to sidebar links as backup
+        // Use event delegation for better reliability
+        document.addEventListener('DOMContentLoaded', function() {
+            const rootHasTabs = document.getElementById('myTabContent');
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlTabSlug = urlParams.get('tab');
+            const initialSlug = (urlTabSlug && tabSlugToIdMap[urlTabSlug]) ? urlTabSlug :
+                                (serverInitialTabSlug && tabSlugToIdMap[serverInitialTabSlug] ? serverInitialTabSlug : '');
+            if (rootHasTabs) {
+                const slugToActivate = initialSlug || 'messages';
+                const tabIdToActivate = tabSlugToIdMap[slugToActivate] || 'messages-tab';
+                setTimeout(() => showTab(tabIdToActivate, null), 0);
+            }
+
+            // Wait a bit for DOM to be fully ready
+            setTimeout(() => {
+                // Use event delegation on the nav element
+                const nav = document.querySelector('aside nav');
+                if (nav) {
+                    nav.addEventListener('click', function(e) {
+                        // Find the closest link
+                        const link = e.target.closest('a[onclick*="showTab"]');
+                        if (!link) return;
+                        
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Extract tab ID from onclick
+                        const onclickAttr = link.getAttribute('onclick');
+                        if (onclickAttr && onclickAttr.includes('showTab')) {
+                            const match = onclickAttr.match(/showTab\('([^']+)'/);
+                            const tabId = match ? match[1] : null;
+                            
+                            if (tabId) {
+                                console.log('Sidebar link clicked (delegation):', tabId);
+                                showTab(tabId, e);
+                            } else {
+                                console.error('Could not extract tab ID from onclick:', onclickAttr);
+                            }
+                        }
+                    }, false);
+                }
+                
+                // Also attach individual listeners as backup
+                const sidebarLinks = document.querySelectorAll('aside nav a[onclick*="showTab"]');
+                sidebarLinks.forEach(link => {
+                    // Extract tab ID from onclick
+                    const onclickAttr = link.getAttribute('onclick');
+                    if (onclickAttr && onclickAttr.includes('showTab')) {
+                        const match = onclickAttr.match(/showTab\('([^']+)'/);
+                        const tabId = match ? match[1] : null;
+                        
+                        if (tabId) {
+                            link.setAttribute('data-tab-id', tabId);
+                            
+                            // Add event listener
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Sidebar link clicked (direct):', tabId);
+                                showTab(tabId, e);
+                            }, false);
+                        }
+                    }
+                });
+            }, 100);
+        });
+        
+        // Function to update sidebar active state based on active tab
+        function updateSidebarActiveState() {
+            // Remove active from all sidebar items
+            document.querySelectorAll('aside nav a').forEach(a => {
+                a.classList.remove('bg-primary/30', 'text-white');
+                a.classList.add('text-white/70');
+            });
+            
+            // Find active tab
+            const activeTab = document.querySelector('.tab-pane.active');
+            const activeTabButton = document.querySelector('.nav-link.active');
+            
+            let tabId = null;
+            if (activeTab) {
+                tabId = activeTab.id;
+            } else if (activeTabButton) {
+                tabId = activeTabButton.id;
+            }
+            
+            // Default to dashboard tab if nothing found
+            if (!tabId) {
+                tabId = 'dashboard-tab';
+            }
+            
+            // Find corresponding sidebar item
+            let sidebarItem = null;
+            if (tabId === 'dashboard' || tabId === 'dashboard-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="dashboard-tab"]');
+            } else if (tabId === 'messages' || tabId === 'messages-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="messages-tab"]');
+            } else if (tabId === 'channels' || tabId === 'channels-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="channels-tab"]');
+            } else if (tabId === 'whatsapp' || tabId === 'whatsapp-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="whatsapp-tab"]');
+            } else if (tabId === 'contacts' || tabId === 'contacts-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="contacts-tab"]');
+            } else if (tabId === 'tournaments' || tabId === 'tournaments-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="tournaments-tab"]');
+            } else if (tabId === 'group-data' || tabId === 'group-data-tab') {
+                sidebarItem = document.querySelector('aside nav a[onclick*="group-data-tab"]');
+            }
+            
+            if (sidebarItem) {
+                sidebarItem.classList.add('bg-primary/30', 'text-white');
+                sidebarItem.classList.remove('text-white/70');
+            }
+        }
+        
+        // Update sidebar active state when tab changes
+        document.addEventListener('shown.bs.tab', function (e) {
+            updateSidebarActiveState();
+        });
+        
+        // Update sidebar active state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSidebarActiveState();
+        });
+        
+        // Also update after a short delay to ensure tabs are initialized
+        setTimeout(updateSidebarActiveState, 100);
+        
+        // Function to open help modal for current active tab
+        function openHelpForCurrentTab() {
+            // Find active tab
+            const activeTab = document.querySelector('.tab-pane.active');
+            let modalId = null;
+            
+            if (activeTab) {
+                const tabId = activeTab.id;
+                if (tabId === 'contacts') {
+                    modalId = 'contactsHelpModal';
+                } else if (tabId === 'messages') {
+                    modalId = 'messagesHelpModal';
+                } else if (tabId === 'channels') {
+                    modalId = 'channelsHelpModal';
+                }
+            }
+            
+            // If no active tab found, try to find active tab button
+            if (!modalId) {
+                const activeTabButton = document.querySelector('.nav-link.active');
+                if (activeTabButton) {
+                    const targetId = activeTabButton.getAttribute('data-bs-target');
+                    if (targetId === '#contacts') {
+                        modalId = 'contactsHelpModal';
+                    } else if (targetId === '#messages') {
+                        modalId = 'messagesHelpModal';
+                    } else if (targetId === '#channels') {
+                        modalId = 'channelsHelpModal';
+                    }
+                }
+            }
+            
+            // Default to contacts if nothing found
+            if (!modalId) {
+                modalId = 'contactsHelpModal';
+            }
+            
+            const modalElement = document.getElementById(modalId);
+            if (modalElement) {
+                // Remove any existing backdrop
+                let existingBackdrop = document.querySelector('.modal-backdrop');
+                if (existingBackdrop) {
+                    existingBackdrop.remove();
+                }
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                
+                const modal = new bootstrap.Modal(modalElement, {
+                    backdrop: false,  // No backdrop
+                    keyboard: true    // Allow ESC to close
+                });
+                
+                // Ensure modal can be closed properly
+                const cleanup = function() {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                };
+                
+                modalElement.addEventListener('hidden.bs.modal', cleanup, { once: true });
+                
+                // Also listen for ESC key
+                const escHandler = function(e) {
+                    if (e.key === 'Escape' && modalElement.classList.contains('show')) {
+                        modal.hide();
+                        cleanup();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
+                
+                modal.show();
+            }
+        }
+        
+        // Make function globally available
+        window.openHelpForCurrentTab = openHelpForCurrentTab;
+        
+        // Function to close help modal
+        function closeHelpModal(modalId) {
+            const modalElement = document.getElementById(modalId);
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                } else {
+                    // If modal instance doesn't exist, create one and hide it
+                    const newModal = new bootstrap.Modal(modalElement);
+                    newModal.hide();
+                }
+                
+                // Cleanup
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+        }
+        
+        // Make function globally available
+        window.closeHelpModal = closeHelpModal;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Функции для загрузки библиотек с альтернативного CDN
+        // Определяем ДО использования в onerror атрибутах
+        window.loadMarkedFromUnpkg = function() {
+            if (typeof marked !== 'undefined') return;
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/marked@11.1.1/lib/marked.umd.js';
+            script.onload = function() {
+                console.log('✅ Marked.js загружен с unpkg');
+                window._markedLoaded = true;
+            };
+            script.onerror = function() {
+                console.error('❌ Не удалось загрузить Marked.js ни с одного CDN');
+                // Последняя попытка - без версии
+                const script2 = document.createElement('script');
+                script2.src = 'https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js';
+                script2.onload = function() {
+                    console.log('✅ Marked.js загружен (без версии)');
+                    window._markedLoaded = true;
+                };
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script);
+        };
+        
+        window.loadDOMPurifyFromUnpkg = function() {
+            if (typeof DOMPurify !== 'undefined' || window._dompurifyLoading) return;
+            window._dompurifyLoading = true;
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/dompurify@3.0.6/purify.min.js';
+            script.onload = function() {
+                console.log('✅ DOMPurify загружен с unpkg');
+                window._dompurifyLoaded = true;
+                window._dompurifyLoading = false;
+            };
+            script.onerror = function() {
+                console.error('❌ Не удалось загрузить DOMPurify с unpkg, пробуем jsdelivr...');
+                // Последняя попытка - без версии
+                const script2 = document.createElement('script');
+                script2.src = 'https://cdn.jsdelivr.net/npm/dompurify/purify.min.js';
+                script2.onload = function() {
+                    console.log('✅ DOMPurify загружен (без версии)');
+                    window._dompurifyLoaded = true;
+                    window._dompurifyLoading = false;
+                };
+                script2.onerror = function() {
+                    console.error('❌ Не удалось загрузить DOMPurify ни с одного CDN');
+                    window._dompurifyLoading = false;
+                };
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script);
+        };
+        
+        // Проверяем загрузку библиотек после загрузки DOM (увеличено время ожидания и добавлена проверка)
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof marked === 'undefined' && !window._markedLoaded && !window._markedLoading) {
+                    window._markedLoading = true;
+                    console.warn('⚠️ Marked.js не обнаружен, пытаемся загрузить...');
+                    window.loadMarkedFromUnpkg();
+                }
+                if (typeof DOMPurify === 'undefined' && !window._dompurifyLoaded && !window._dompurifyLoading) {
+                    window._dompurifyLoading = true;
+                    console.warn('⚠️ DOMPurify не обнаружен, пытаемся загрузить...');
+                    window.loadDOMPurifyFromUnpkg();
+                }
+            }, 2000); // Увеличено время ожидания до 2 секунд
+        });
+    </script>
+    <!-- Marked.js for Markdown parsing - используем правильный путь согласно документации -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/lib/marked.umd.js" 
+            onload="console.log('✅ Marked.js загружен'); window._markedLoaded = true;" 
+            onerror="console.error('❌ Ошибка загрузки Marked.js с jsdelivr, пробуем unpkg...'); if(typeof window.loadMarkedFromUnpkg === 'function') window.loadMarkedFromUnpkg();"></script>
+    <!-- DOMPurify for sanitizing HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/purify.min.js" 
+            onload="console.log('✅ DOMPurify загружен'); window._dompurifyLoaded = true;" 
+            onerror="console.error('❌ Ошибка загрузки DOMPurify с jsdelivr, пробуем unpkg...'); if(typeof window.loadDOMPurifyFromUnpkg === 'function') window.loadDOMPurifyFromUnpkg();"></script>
+    <script src="/static/js/app.js?v={{ range(1, 10000) | random }}"></script>
+    <script src="/static/js/contact_enrichment.js?v={{ range(1, 10000) | random }}"></script>
+    <script src="/static/js/whatsapp_sync.js?v={{ range(1, 10000) | random }}"></script>
+    <script src="/static/js/tournaments.js?v={{ range(1, 10000) | random }}"></script>
+    <script src="/static/js/dashboard.js?v={{ range(1, 10000) | random }}"></script>
+</body>
+
+</html>

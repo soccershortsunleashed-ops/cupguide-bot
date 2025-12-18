@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white text-3xl font-bold mb-2">🔐 Админ Панель</h1>
+            <p class="text-gray-400">Управление LLM ключами и провайдерами</p>
+        </div>
+    </div>
+
+    <!-- Статус системы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glassmorphic rounded-lg p-4 mb-4">
+                <h2 class="text-white text-xl font-semibold mb-3">Статус системы</h2>
+                <div id="adminStatus" class="text-gray-300">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-yellow-500">hourglass_empty</span>
+                        <span>Загрузка статуса...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Текущий активный ключ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glassmorphic rounded-lg p-4">
+                <h2 class="text-white text-xl font-semibold mb-3">Текущий активный ключ</h2>
+                <div id="currentKeyDisplay" class="mb-3">
+                    <div class="flex items-center gap-2 text-gray-300">
+                        <span class="material-symbols-outlined text-yellow-500">hourglass_empty</span>
+                        <span>Загрузка...</span>
+                    </div>
+                </div>
+                <div class="bg-gray-800 rounded p-3 font-mono text-sm text-gray-300" id="activeKeyValue">
+                    <span class="text-gray-500">sk-proj-</span><span id="keyMask">***</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Добавление нового ключа -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glassmorphic rounded-lg p-4">
+                <h2 class="text-white text-xl font-semibold mb-3">Добавить новый ключ</h2>
+                <form id="newKeyForm" class="space-y-3">
+                    <div>
+                        <label for="newKeyInput" class="block text-gray-300 text-sm font-medium mb-2">
+                            OpenAI API Key
+                        </label>
+                        <input 
+                            type="password" 
+                            id="newKeyInput" 
+                            class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Введите API ключ..."
+                            required
+                        />
+                        <div class="mt-2">
+                            <label for="providerSelect" class="block text-gray-300 text-sm font-medium mb-2">
+                                Провайдер
+                            </label>
+                            <select 
+                                id="providerSelect" 
+                                class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="openai">OpenAI (ChatGPT)</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="groq">Groq</option>
+                                <option value="megallm">MegaLLM</option>
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="other">Другой</option>
+                            </select>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-1">
+                            Новый ключ автоматически станет активным. Поддерживаются ключи любых форматов.
+                        </p>
+                    </div>
+                    <button 
+                        type="submit" 
+                        id="saveKeyBtn"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span class="material-symbols-outlined align-middle mr-2">save</span>
+                        Сохранить ключ
+                    </button>
+                </form>
+                <div id="keyFormMessage" class="mt-3 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Конфигурация LLM (Провайдер и Модели) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glassmorphic rounded-lg p-4">
+                <h2 class="text-white text-xl font-semibold mb-3">⚙️ Конфигурация LLM</h2>
+                
+                <!-- Выбор провайдера и ключа -->
+                <div class="mb-4 p-4 bg-gray-800/50 rounded-lg">
+                    <h3 class="text-white text-lg font-medium mb-3">Провайдер и API ключ</h3>
+                    <form id="providerConfigForm" class="space-y-3">
+                        <div>
+                            <label for="llmProviderSelect" class="block text-gray-300 text-sm font-medium mb-2">
+                                Провайдер
+                            </label>
+                            <select 
+                                id="llmProviderSelect" 
+                                class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="openai">OpenAI (ChatGPT)</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="groq">Groq</option>
+                                <option value="megallm">MegaLLM</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="llmApiKeyInput" class="block text-gray-300 text-sm font-medium mb-2">
+                                API ключ
+                            </label>
+                            <input 
+                                type="password" 
+                                id="llmApiKeyInput" 
+                                class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Введите API ключ..."
+                                required
+                            />
+                        </div>
+                        <button 
+                            type="submit" 
+                            id="saveProviderBtn"
+                            class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span class="material-symbols-outlined align-middle mr-2">save</span>
+                            Сохранить провайдер и ключ
+                        </button>
+                    </form>
+                    <div id="providerFormMessage" class="mt-3 hidden"></div>
+                </div>
+                
+                <!-- Выбор моделей -->
+                <div id="modelsConfigSection" class="hidden p-4 bg-gray-800/50 rounded-lg">
+                    <h3 class="text-white text-lg font-medium mb-3">Выбор моделей</h3>
+                    <form id="modelsConfigForm" class="space-y-3">
+                        <div>
+                            <label for="textModelSelect" class="block text-gray-300 text-sm font-medium mb-2">
+                                Текстовая модель (для анализа сообщений)
+                            </label>
+                            <select 
+                                id="textModelSelect" 
+                                class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="">Загрузка моделей...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="visionModelSelect" class="block text-gray-300 text-sm font-medium mb-2">
+                                Vision модель (для OCR по изображениям)
+                            </label>
+                            <select 
+                                id="visionModelSelect" 
+                                class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="">Загрузка моделей...</option>
+                            </select>
+                            <p class="text-gray-500 text-xs mt-1">
+                                Рекомендуется выбрать модель с поддержкой vision (например, gemini-pro-vision)
+                            </p>
+                        </div>
+                        <button 
+                            type="submit" 
+                            id="saveModelsBtn"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span class="material-symbols-outlined align-middle mr-2">save</span>
+                            Сохранить модели
+                        </button>
+                    </form>
+                    <div id="modelsFormMessage" class="mt-3 hidden"></div>
+                </div>
+                
+                <!-- Текущая конфигурация -->
+                <div id="currentConfigDisplay" class="mt-4 p-4 bg-gray-800/30 rounded-lg">
+                    <h3 class="text-white text-lg font-medium mb-2">Текущая конфигурация</h3>
+                    <div id="currentConfigContent" class="text-gray-400 text-sm">
+                        Загрузка...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- История ключей -->
+    <div class="row">
+        <div class="col-12">
+            <div class="glassmorphic rounded-lg p-4">
+                <h2 class="text-white text-xl font-semibold mb-3">История ключей</h2>
+                <div id="keysHistory" class="space-y-2">
+                    <div class="text-gray-400 text-sm">
+                        <span class="material-symbols-outlined align-middle mr-2">hourglass_empty</span>
+                        Загрузка истории...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for viewing full API key -->
+<div id="viewKeyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 backdrop-blur-sm" style="display: none;">
+    <div class="relative w-full max-w-2xl mx-4 bg-gray-800 rounded-lg border border-gray-700 shadow-xl">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <h3 class="text-white text-lg font-semibold">Просмотр API ключа</h3>
+            <button id="closeViewKeyModal" class="text-gray-400 hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-4">
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-2">Провайдер</label>
+                <div id="viewKeyProvider" class="text-white text-base"></div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-2">API ключ</label>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="viewKeyInput" 
+                        readonly 
+                        class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-primary"
+                        value=""
+                    >
+                    <button 
+                        id="copyKeyBtn" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors flex items-center gap-2"
+                        title="Копировать ключ"
+                    >
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                        <span class="text-sm">Копировать</span>
+                    </button>
+                </div>
+            </div>
+            <div id="copyKeyMessage" class="hidden text-green-400 text-sm mt-2"></div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-700">
+            <button 
+                id="closeViewKeyModalBtn" 
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/admin_panel.js"></script>
+{% endblock %}
+

@@ -1,0 +1,15 @@
+# Telegram Bot Dependencies
+aiogram==3.13.1
+openai==1.54.4
+httpx==0.27.2
+pydantic==2.9.2
+python-dotenv==1.0.1
+psutil==5.9.8  # For process management and duplicate detection
+
+# Optional dependencies for production
+redis==5.1.1
+uvloop==0.21.0  # For better async performance on Linux
+
+# Testing dependencies
+pytest==8.3.3
+pytest-asyncio==0.24.0

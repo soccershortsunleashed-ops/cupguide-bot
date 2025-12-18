@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* Tournament Card Styles */
+[data-slot="card"] {
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-slot="badge"] {
+    backdrop-filter: blur(8px);
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+[data-slot="table-container"] {
+    backdrop-filter: blur(8px);
+}
+
+[data-slot="table-row"]:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    border-radius: 0.5rem;
+    color: #93c5fd;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.contact-link:hover {
+    background: rgba(37, 99, 235, 0.3);
+    color: white;
+}
+
+.whatsapp-link {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #86efac;
+}
+
+.whatsapp-link:hover {
+    background: rgba(34, 197, 94, 0.3);
+    color: white;
+}
+
+/* Material Icons */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Markdown content styles */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    color: white;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+}
+
+.markdown-content h1 { font-size: 1.875rem; }
+.markdown-content h2 { font-size: 1.5rem; }
+.markdown-content h3 { font-size: 1.25rem; }
+.markdown-content h4 { font-size: 1.125rem; }
+
+.markdown-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25rem;
+}
+
+.markdown-content strong {
+    font-weight: bold;
+    color: white;
+}
+
+.markdown-content em {
+    font-style: italic;
+}
+
+.markdown-content code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.875rem;
+}
+
+.markdown-content pre {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid rgba(59, 130, 246, 0.5);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.markdown-content th,
+.markdown-content td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+    color: white;
+}
+
+.markdown-content hr {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 2rem 0;
+}
+
+.markdown-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+.markdown-content a:hover {
+    color: #93c5fd;
+}
+</style>
+
+<!-- Main Container -->
+<div class="flex flex-1 flex-col">
+    <div class="@container/main flex flex-1 flex-col gap-2">
+        <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div class="px-4 lg:px-6">
+                <!-- Header -->
+                <div class="mb-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <a href="/tournaments" class="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span class="text-sm">Назад к турнирам</span>
+                        </a>
+                        <div class="flex items-center gap-4">
+                            <a href="/tournaments/{{ tournament.id }}/edit" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-white/90 hover:text-white transition-all duration-200">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                <span class="text-sm font-medium">Редактировать</span>
+                            </a>
+                            <button id="publishTelegraphBtn" onclick="publishToTelegraph()" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded-lg text-white/90 hover:text-white transition-all duration-200">
+                                <span class="material-symbols-outlined text-sm">send</span>
+                                <span id="publishBtnText" class="text-sm font-medium">{% if tournament.teletype_url %}Обновить в Teletype{% else %}Опубликовать в Teletype{% endif %}</span>
+                            </button>
+                            {% if tournament.teletype_url %}
+                            <a href="{{ tournament.teletype_url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 rounded-lg text-green-400 hover:text-green-300 transition-all duration-200">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                <span class="text-sm font-medium">Открыть в Teletype</span>
+                            </a>
+                            {% endif %}
+                            <div class="flex items-center gap-2 text-white/60 text-xs">
+                                <span class="material-symbols-outlined text-base">passkey</span>
+                                <span>ID турнира: {{ tournament.id }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Section with Image -->
+                {% if tournament.image_cover_16x9_url or tournament.image_original_url %}
+                <div class="mb-8">
+                    <div class="relative w-full overflow-hidden rounded-xl shadow-lg" style="aspect-ratio: 16/9;">
+                        <img src="{{ tournament.image_cover_16x9_url or tournament.image_original_url }}" 
+                             alt="Постер турнира {{ tournament.title }}" 
+                             class="absolute inset-0 w-full h-full object-cover rounded-xl">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Tournament Header -->
+                <div data-slot="card" class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 text-white rounded-xl p-8 mb-8">
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                        <h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                            {{ tournament.title }}
+                        </h1>
+                        <div class="flex items-center gap-2">
+                            {% if tournament.priority_rating %}
+                            <div class="flex-shrink-0 px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                                <span class="text-yellow-400 text-sm font-medium">⭐ Рейтинг</span>
+                            </div>
+                            {% elif tournament.is_premium %}
+                            <div class="flex-shrink-0 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                                <span class="text-blue-400 text-sm font-medium">🔝 Премиум</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if tournament.priority_rating and tournament.priority_rating_start_date %}
+                    <div class="mb-4 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg inline-flex items-center gap-2">
+                        <span class="material-symbols-outlined text-yellow-400 text-sm">schedule</span>
+                        <span class="text-yellow-300 text-sm" id="priorityDaysRemaining">
+                            Рейтинг: осталось <strong>--</strong> из 45 дней
+                        </span>
+                    </div>
+                    <script>
+                        (function() {
+                            const startDate = new Date('{{ tournament.priority_rating_start_date }}');
+                            const endDate = new Date(startDate);
+                            endDate.setDate(endDate.getDate() + 45);
+                            const today = new Date();
+                            const diffTime = endDate - today;
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            const el = document.getElementById('priorityDaysRemaining');
+                            if (el) {
+                                if (diffDays > 0) {
+                                    el.innerHTML = 'Рейтинг: осталось <strong>' + diffDays + '</strong> из 45 дней';
+                                } else {
+                                    el.innerHTML = '<span class="text-red-400">⚠️ Рейтинг истёк</span>';
+                                }
+                            }
+                        })();
+                    </script>
+                    {% elif tournament.is_premium and tournament.premium_until %}
+                    <div class="mb-4 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg inline-flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-400 text-sm">schedule</span>
+                        <span class="text-blue-300 text-sm" id="premiumDaysRemaining">
+                            Премиум до: <strong>--</strong>
+                        </span>
+                    </div>
+                    <script>
+                        (function() {
+                            const endDate = new Date('{{ tournament.premium_until }}T00:00:00');
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            // Разница в днях
+                            const diffDays = Math.floor((endDate - today) / (1000 * 60 * 60 * 24));
+                            const el = document.getElementById('premiumDaysRemaining');
+                            if (el) {
+                                if (diffDays > 0) {
+                                    el.innerHTML = 'Премиум: осталось <strong>' + diffDays + '</strong> дн.';
+                                } else if (diffDays === 0) {
+                                    el.innerHTML = 'Премиум: <strong>последний день</strong>';
+                                } else {
+                                    el.innerHTML = '<span class="text-red-400">⚠️ Премиум истёк</span>';
+                                }
+                            }
+                        })();
+                    </script>
+                    {% endif %}
+                    
+                    {% if tournament.short_description %}
+                    <p class="text-white/80 text-lg mb-6">
+                        {{ tournament.short_description }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Key Parameters Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- Dates Card -->
+                    {% if tournament.start_date or tournament.end_date %}
+                    <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="material-symbols-outlined text-lg text-blue-400">calendar_today</span>
+                            <h3 class="text-sm font-medium text-white/60">Даты проведения</h3>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xl font-bold text-white">
+                                {% if tournament.start_date and tournament.end_date %}
+                                    <span class="block">{{ tournament.start_date | format_date }}</span>
+                                    <span class="block text-white/60 text-sm my-1">–</span>
+                                    <span class="block">{{ tournament.end_date | format_date }}</span>
+                                {% elif tournament.start_date %}
+                                    {{ tournament.start_date | format_date }}
+                                {% elif tournament.end_date %}
+                                    {{ tournament.end_date | format_date }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Location Card -->
+                    {% if tournament.city %}
+                    <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-lg text-green-400">location_on</span>
+                            <h3 class="text-sm font-medium text-white/60">Локация</h3>
+                        </div>
+                        <p class="text-xl font-bold text-white">{{ tournament.city }}</p>
+                        {% if tournament.region %}
+                        <p class="text-sm text-white/60 mt-1">{{ tournament.region }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Age Categories Card -->
+                    {% if tournament.birth_years_display %}
+                    <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-lg text-purple-400">groups</span>
+                            <h3 class="text-sm font-medium text-white/60">Возрастные категории</h3>
+                        </div>
+                        <p class="text-xl font-bold text-white">{{ tournament.birth_years_display }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Entry Fee Card -->
+                    {% if tournament.entry_fee %}
+                    <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-lg text-yellow-400">payments</span>
+                            <h3 class="text-sm font-medium text-white/60">Заявочный взнос</h3>
+                        </div>
+                        <p class="text-xl font-bold text-white">{{ tournament.entry_fee }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Main Content Grid - 2 columns: Description left, Info blocks right -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Tournament Description (spans 2 columns on large screens) -->
+                    <div class="lg:col-span-2">
+                        {% if tournament.body %}
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">description</span>
+                                Описание турнира
+                            </h2>
+                            <div class="prose prose-invert max-w-none markdown-content">
+                                <div class="text-white/90 leading-relaxed" id="tournamentBodyContent" style="display: none;">{{ tournament.body }}</div>
+                                <div class="text-white/90 leading-relaxed" id="tournamentBodyRendered"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Right Column: Info blocks -->
+                    <div class="space-y-6">
+                        <!-- Basic Info Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">info</span>
+                                Основная информация
+                            </h2>
+                            <div class="space-y-3">
+                                {% if tournament.start_date or tournament.end_date %}
+                                <div>
+                                    <p class="text-white/60 text-xs mb-1">Даты проведения</p>
+                                    <p class="text-white text-sm font-medium">
+                                        {% if tournament.start_date and tournament.end_date %}
+                                            {{ tournament.start_date | format_date }} – {{ tournament.end_date | format_date }}
+                                        {% elif tournament.start_date %}
+                                            {{ tournament.start_date | format_date }}
+                                        {% elif tournament.end_date %}
+                                            {{ tournament.end_date | format_date }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if tournament.sport %}
+                                <div>
+                                    <p class="text-white/60 text-xs mb-1">Вид спорта</p>
+                                    <p class="text-white text-sm font-medium">{{ tournament.sport }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if tournament.birth_years_display %}
+                                <div>
+                                    <p class="text-white/60 text-xs mb-1">Года рождения</p>
+                                    <p class="text-white text-sm font-medium">{{ tournament.birth_years_display }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if tournament.format %}
+                                <div>
+                                    <p class="text-white/60 text-xs mb-1">Формат</p>
+                                    <p class="text-white text-sm font-medium">{{ tournament.format }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if tournament.entry_fee %}
+                                <div>
+                                    <p class="text-white/60 text-xs mb-1">Взнос за участие</p>
+                                    <p class="text-white text-sm font-medium">{{ tournament.entry_fee }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Organizer Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">business</span>
+                                Организатор
+                            </h2>
+                            
+                            {% if tournament.organizer_name %}
+                            <div class="mb-4">
+                                <p class="text-white/60 text-sm mb-1">Название</p>
+                                <p class="text-white font-medium">{{ tournament.organizer_name }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Enhanced contacts from extracted data -->
+                            {% if extracted_data and extracted_data.contacts %}
+                            {% if extracted_data.contacts.person %}
+                            <div class="mb-4">
+                                <p class="text-white/60 text-sm mb-1">Контактное лицо</p>
+                                <p class="text-white font-medium">{{ extracted_data.contacts.person }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="space-y-3">
+                                {% if extracted_data.contacts.phoneDisplay %}
+                                <div class="space-y-2">
+                                    <a href="https://wa.me/{{ extracted_data.contacts.phoneDigits }}" 
+                                       class="contact-link whatsapp-link w-full justify-center"
+                                       target="_blank">
+                                        <span class="material-symbols-outlined text-sm">chat</span>
+                                        Написать в WhatsApp
+                                    </a>
+                                    <button onclick="openWhatsAppDialog('{{ extracted_data.contacts.phoneDigits }}', '{{ extracted_data.contacts.phoneDisplay }}')"
+                                            class="contact-link w-full justify-center">
+                                        <span class="material-symbols-outlined text-sm">call</span>
+                                        {{ extracted_data.contacts.phoneDisplay }}
+                                    </button>
+                                </div>
+                                {% endif %}
+                                
+                                {% if extracted_data.contacts.email %}
+                                <a href="mailto:{{ extracted_data.contacts.email }}" 
+                                   class="contact-link w-full justify-center">
+                                    <span class="material-symbols-outlined text-sm">email</span>
+                                    {{ extracted_data.contacts.email }}
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            {% else %}
+                            <!-- Fallback: Basic contact buttons from tournament.contact -->
+                            {% if tournament.contact %}
+                            <div class="mb-4">
+                                <p class="text-white/60 text-sm mb-1">Контакты</p>
+                            </div>
+                            
+                            <div class="space-y-3" id="basicContactButtons" data-contact="{{ tournament.contact }}">
+                                <!-- Contact buttons will be generated by JavaScript -->
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// Markdown processing and WhatsApp dialog functionality
+document.addEventListener('DOMContentLoaded', () => {
+    // Process Markdown content
+    const bodyContent = document.getElementById('tournamentBodyContent');
+    const renderedContent = document.getElementById('tournamentBodyRendered');
+    
+    if (bodyContent && renderedContent && bodyContent.textContent) {
+        const markdownText = bodyContent.textContent.trim();
+        console.log('Processing markdown:', markdownText.substring(0, 100) + '...');
+        
+        try {
+            const htmlContent = marked.parse(markdownText);
+            renderedContent.innerHTML = htmlContent;
+            console.log('✅ Markdown processed successfully');
+        } catch (error) {
+            console.error('❌ Error processing markdown:', error);
+            // Fallback: show raw content
+            renderedContent.innerHTML = markdownText.replace(/\n/g, '<br>');
+        }
+    } else {
+        console.log('❌ Markdown elements not found or no content');
+    }
+
+    // Process basic contact buttons
+    const basicContactContainer = document.getElementById('basicContactButtons');
+    if (basicContactContainer) {
+        const contactData = basicContactContainer.getAttribute('data-contact');
+        if (contactData) {
+            console.log('Processing basic contact:', contactData);
+            const buttons = createContactButtons(contactData);
+            basicContactContainer.innerHTML = buttons;
+        }
+    }
+});
+
+// Function to extract phone number and create contact buttons
+function createContactButtons(contactText) {
+    // Extract phone number using regex (supports various formats)
+    const phoneRegex = /(\+?[7-8][\s\-]?\(?9\d{2}\)?\s?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}|\+?[7-8][\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2})/;
+    const phoneMatch = contactText.match(phoneRegex);
+    
+    if (phoneMatch) {
+        const phoneDisplay = phoneMatch[0].trim();
+        // Clean phone number for WhatsApp (remove all non-digits, then format)
+        const phoneDigits = phoneDisplay.replace(/\D/g, '');
+        
+        // Ensure it starts with 7 for Russian numbers
+        const normalizedPhone = phoneDigits.startsWith('8') ? '7' + phoneDigits.slice(1) : phoneDigits;
+        
+        console.log('Extracted phone:', phoneDisplay, '→', normalizedPhone);
+        
+        return `
+            <div class="space-y-2">
+                <a href="https://wa.me/${normalizedPhone}" 
+                   class="contact-link whatsapp-link w-full justify-center"
+                   target="_blank">
+                    <span class="material-symbols-outlined text-sm">chat</span>
+                    Написать в WhatsApp
+                </a>
+                <button onclick="openWhatsAppDialog('${normalizedPhone}', '${phoneDisplay}')"
+                        class="contact-link w-full justify-center">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                    ${phoneDisplay}
+                </button>
+            </div>
+        `;
+    } else {
+        // No phone found, show contact as text
+        return `
+            <div class="text-white text-sm">
+                ${contactText}
+            </div>
+        `;
+    }
+}
+
+// WhatsApp dialog function
+function openWhatsAppDialog(phoneDigits, phoneDisplay) {
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 max-w-md mx-4 text-white">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="material-symbols-outlined text-2xl text-green-400">chat</span>
+                <h3 class="text-lg font-semibold">Связаться с организатором</h3>
+            </div>
+            
+            <p class="text-white/80 mb-6">
+                Выберите способ связи с организатором турнира:
+            </p>
+            
+            <div class="space-y-3">
+                <a href="https://wa.me/${phoneDigits}" 
+                   target="_blank"
+                   class="contact-link whatsapp-link w-full justify-center">
+                    <span class="material-symbols-outlined text-sm">chat</span>
+                    Открыть WhatsApp
+                </a>
+                
+                <a href="tel:+${phoneDigits}" 
+                   class="contact-link w-full justify-center">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                    Позвонить ${phoneDisplay}
+                </a>
+                
+                <button onclick="this.closest('.fixed').remove()" 
+                        class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white/80 hover:bg-white/20 transition">
+                    Отмена
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    document.body.appendChild(modal);
+}
+
+// Публикация в Telegraph/Teletype
+async function publishToTelegraph() {
+    const btn = document.getElementById('publishTelegraphBtn');
+    const btnText = document.getElementById('publishBtnText');
+    const tournamentId = {{ tournament.id }};
+    const hasExisting = {{ 'true' if tournament.teletype_url else 'false' }};
+    
+    const originalText = btnText.textContent;
+    btn.disabled = true;
+    btnText.textContent = 'Публикация...';
+    
+    try {
+        const endpoint = hasExisting 
+            ? `/api/teletype/update/${tournamentId}`
+            : `/api/teletype/publish/${tournamentId}`;
+        const method = hasExisting ? 'PUT' : 'POST';
+        
+        const response = await fetch(endpoint, { method });
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ ' + result.message + '\n\nСсылка: ' + result.url);
+            btnText.textContent = 'Обновить в Teletype';
+            window.location.reload();
+        } else {
+            alert('❌ Ошибка: ' + (result.detail || result.error || 'Неизвестная ошибка'));
+            btnText.textContent = originalText;
+        }
+    } catch (error) {
+        alert('❌ Ошибка сети: ' + error.message);
+        btnText.textContent = originalText;
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+
+{% endblock %}

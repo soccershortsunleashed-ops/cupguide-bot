@@ -1,0 +1,1072 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Clean Shadcn Styles -->
+<style>
+/* Shadcn component overrides for dark theme */
+[data-slot="card"] {
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-slot="badge"] {
+    backdrop-filter: blur(8px);
+}
+
+[data-slot="table-container"] {
+    backdrop-filter: blur(8px);
+}
+
+[data-slot="table-row"]:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Material Icons - Ensure font is loaded */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+</style>
+
+<!-- Main Container with proper spacing like dashboard-01 -->
+<div class="flex flex-1 flex-col">
+    <div class="@container/main flex flex-1 flex-col gap-2">
+        <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div class="px-4 lg:px-6">
+                <!-- Header -->
+                <div class="mb-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <a href="/tournaments" class="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span class="text-sm">Назад к турнирам</span>
+                        </a>
+                        <div class="flex items-center gap-2 text-white/60 text-xs">
+                            <span class="material-symbols-outlined text-base">passkey</span>
+                            <span>ID турнира: {{ tournament.id }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Unified Tournament Header with Description -->
+                    <div data-slot="card" class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 text-white rounded-xl p-8 mb-6">
+                        <div class="flex items-start justify-between flex-wrap gap-3 mb-6">
+                            <div class="flex-1 min-w-[250px]" id="tournamentHeaderView">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]" id="tournamentTitleDisplay">{{ tournament.title }}</h1>
+                                </div>
+                                <p class="text-white/60 text-lg mb-4" id="tournamentLocationDisplay">
+                                    {% if tournament.city %}
+                                        {{ tournament.city }}{% if tournament.region %}, {{ tournament.region }}{% endif %}
+                                    {% else %}
+                                        &nbsp;
+                                    {% endif %}
+                                </p>
+                                <!-- Tournament Description integrated into header -->
+                                {% if tournament.description_short %}
+                                <div class="text-white/90 text-lg leading-relaxed">
+                                    <h2 class="text-white/70 text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">info</span>
+                                        Подробности
+                                    </h2>
+                                    <p class="text-white/85">{{ tournament.description_short }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="hidden w-full" id="tournamentHeaderEdit">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                                    <div>
+                                        <label class="text-white/60 text-xs mb-1 block">Название турнира</label>
+                                        <input type="text" id="tournamentTitleInput" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" value="{{ tournament.title }}">
+                                    </div>
+                                    <div>
+                                        <label class="text-white/60 text-xs mb-1 block">Город</label>
+                                        <input type="text" id="tournamentCityInput" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" value="{{ tournament.city }}">
+                                    </div>
+                                    <div>
+                                        <label class="text-white/60 text-xs mb-1 block">Регион</label>
+                                        <input type="text" id="tournamentRegionInput" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" value="{{ tournament.region }}">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-white/60 text-xs mb-1 block">Описание турнира</label>
+                                    <textarea id="tournamentDescriptionShortInput" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm min-h-[100px]" placeholder="Краткое описание турнира...">{{ tournament.description_short }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <button id="editTournamentBtn" class="flex items-center gap-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white/80 hover:bg-white/20 transition text-xs">
+                                    <span class="material-symbols-outlined text-sm">edit</span>
+                                    Редактировать
+                                </button>
+                                <button id="saveTournamentBtn" class="hidden flex items-center gap-1 px-3 py-1.5 bg-green-500/80 border border-green-400 rounded-lg text-white text-xs disabled:opacity-60">
+                                    <span class="material-symbols-outlined text-sm">save</span>
+                                    Сохранить
+                                </button>
+                                <button id="cancelTournamentBtn" class="hidden flex items-center gap-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white/80 text-xs">
+                                    <span class="material-symbols-outlined text-sm">close</span>
+                                    Отмена
+                                </button>
+                                <button id="publishTelegraphBtn" onclick="publishToTelegraph()" class="flex items-center gap-1 px-3 py-1.5 bg-blue-500/80 border border-blue-400 rounded-lg text-white hover:bg-blue-600/80 transition text-xs">
+                                    <span class="material-symbols-outlined text-sm">send</span>
+                                    <span id="publishBtnText">{% if tournament.telegraph_url %}Обновить в Teletype{% else %}Опубликовать в Teletype{% endif %}</span>
+                                </button>
+                                {% if tournament.telegraph_url %}
+                                <a href="{{ tournament.telegraph_url }}" target="_blank" class="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 hover:bg-green-500/30 transition text-xs">
+                                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    Открыть в Teletype
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tournament Image with proper aspect ratio -->
+                    {% if tournament.image_cover_16x9_url or tournament.image_original_url or tournament.poster_url or tournament.poster_path %}
+                    <div class="mb-6">
+                        <div data-slot="aspect-ratio" class="relative w-full overflow-hidden rounded-xl shadow-lg" style="aspect-ratio: 16/9;">
+                            <img src="{{ tournament.image_cover_16x9_url or tournament.image_original_url or tournament.poster_url or tournament.poster_path }}" 
+                                 alt="Постер турнира {{ tournament.title }}" 
+                                 class="absolute inset-0 w-full h-full object-contain bg-gradient-to-br from-black/5 to-black/10 rounded-xl"
+                                 style="object-fit: contain; object-position: center;">
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Key Information Cards - 4 columns on desktop, responsive -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <!-- Dates Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="material-symbols-outlined text-lg text-blue-400">calendar_today</span>
+                                <h3 class="text-sm font-medium text-white/60">Даты проведения</h3>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xl font-bold text-white" id="tournamentDatesCard">
+                                    {% if tournament.start_date and tournament.end_date %}
+                                        <span class="block">{{ tournament.start_date | format_date }}</span>
+                                        <span class="block text-white/60 text-sm my-1">–</span>
+                                        <span class="block">{{ tournament.end_date | format_date }}</span>
+                                    {% elif tournament.start_date %}
+                                        {{ tournament.start_date | format_date }}
+                                    {% elif tournament.end_date %}
+                                        {{ tournament.end_date | format_date }}
+                                    {% else %}
+                                        Не указаны
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Sport Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-lg text-green-400">sports_soccer</span>
+                                <h3 class="text-sm font-medium text-white/60">Вид спорта</h3>
+                            </div>
+                            <p class="text-xl font-bold text-white">{{ tournament.sport or 'Не указан' }}</p>
+                        </div>
+
+                        <!-- Age Categories Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-lg text-purple-400">groups</span>
+                                <h3 class="text-sm font-medium text-white/60">Возрастные категории</h3>
+                            </div>
+                            <p class="text-xl font-bold text-white">{{ tournament.birth_years_display or 'Не указаны' }}</p>
+                        </div>
+
+                        <!-- Entry Fee Card -->
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-lg text-yellow-400">payments</span>
+                                <h3 class="text-sm font-medium text-white/60">Заявочный взнос</h3>
+                            </div>
+                            <p class="text-xl font-bold text-white">{{ tournament.entry_fee or 'Не указан' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Grid - 3 equal columns -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Column 1: Tournament Structure & Rules -->
+                        <div class="space-y-6">
+                            <!-- Tournament Structure Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">emoji_events</span>
+                                    Структура турнира
+                                </h3>
+                                <div class="space-y-2">
+                                    <p class="text-white/80">• Групповой этап (при 8 командах — две группы по 4)</p>
+                                    <p class="text-white/80">• Плей-офф: четвертьфинал, полуфинал, финал</p>
+                                    <p class="text-white/80">• Однокруговой турнир в группах</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Game Format Table Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">table_chart</span>
+                                    Игровые форматы
+                                </h3>
+                                
+                                <!-- Mobile-friendly card layout for small screens -->
+                                <div class="block md:hidden space-y-3">
+                                    <div class="bg-white/5 rounded-lg p-3 border border-white/10">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-white font-semibold">2014 г.р.</span>
+                                            <span class="text-white/80 text-sm">8+1</span>
+                                        </div>
+                                        <div class="text-xs text-white/70 space-y-1">
+                                            <div>Поле: 60×40 • Ворота: 5×2</div>
+                                            <div>Время: 2×25 мин</div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white/5 rounded-lg p-3 border border-white/10">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-white font-semibold">2015 г.р.</span>
+                                            <span class="text-white/80 text-sm">6+1</span>
+                                        </div>
+                                        <div class="text-xs text-white/70 space-y-1">
+                                            <div>Поле: 50×30 • Ворота: 5×2</div>
+                                            <div>Время: 2×25 мин</div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white/5 rounded-lg p-3 border border-white/10">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-white font-semibold">2016 г.р.</span>
+                                            <span class="text-white/80 text-sm">6+1</span>
+                                        </div>
+                                        <div class="text-xs text-white/70 space-y-1">
+                                            <div>Поле: 50×30 • Ворота: 5×2</div>
+                                            <div>Время: 2×25 мин</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Table layout for larger screens -->
+                                <div class="hidden md:block">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="border-b border-white/20">
+                                                <th class="text-left py-2 px-2 text-white/90 font-semibold text-xs">Год</th>
+                                                <th class="text-left py-2 px-2 text-white/90 font-semibold text-xs">Формат</th>
+                                                <th class="text-left py-2 px-2 text-white/90 font-semibold text-xs">Поле</th>
+                                                <th class="text-left py-2 px-2 text-white/90 font-semibold text-xs">Ворота</th>
+                                                <th class="text-left py-2 px-2 text-white/90 font-semibold text-xs">Время</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-2 px-2 text-white/80 font-medium text-sm">2014</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">8+1</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">60×40</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">5×2</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">2×25</td>
+                                            </tr>
+                                            <tr class="border-b border-white/10">
+                                                <td class="py-2 px-2 text-white/80 font-medium text-sm">2015</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">6+1</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">50×30</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">5×2</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">2×25</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="py-2 px-2 text-white/80 font-medium text-sm">2016</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">6+1</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">50×30</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">5×2</td>
+                                                <td class="py-2 px-2 text-white/80 text-sm">2×25</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-3 text-xs text-white/60">
+                                    <p>• Замены свободные для всех возрастов</p>
+                                    <p>• Игры проводятся по правилам ФИФА с адаптацией под детский возраст</p>
+                                </div>
+                            </div>
+
+                            <!-- Points System Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">sports_soccer</span>
+                                    Система очков
+                                </h3>
+                                <div class="space-y-2">
+                                    <p class="text-white/80">• Победа — 3 очка</p>
+                                    <p class="text-white/80">• Ничья — 1 очко</p>
+                                    <p class="text-white/80">• Поражение — 0 очков</p>
+                                </div>
+                            </div>
+
+                            <!-- Tiebreakers Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">bar_chart</span>
+                                    Критерии определения мест
+                                </h3>
+                                <div class="space-y-2">
+                                    <p class="text-white/80">• Количество побед</p>
+                                    <p class="text-white/80">• Личные встречи</p>
+                                    <p class="text-white/80">• Разность забитых и пропущенных мячей</p>
+                                    <p class="text-white/80">• Количество забитых мячей</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Participation & Requirements -->
+                        <div class="space-y-6">
+                            <!-- Participation Conditions Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl p-6">
+                                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">assignment</span>
+                                    Условия участия и заявки
+                                </h2>
+                                <div class="space-y-3">
+                                    <p class="text-white/90 mb-3">Для участия команда должна:</p>
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-blue-400 mt-1">•</span>
+                                        <p class="text-white/80">отправить эмблему клуба до начала турнира</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-blue-400 mt-1">•</span>
+                                        <p class="text-white/80">подтвердить заявку за <strong class="text-white font-semibold">10 дней</strong> до старта</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-blue-400 mt-1">•</span>
+                                        <p class="text-white/80">предоставить оригиналы документов и доверенность при заселении</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Key Info Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-white text-lg font-bold">Основная информация</h2>
+                                    <span class="text-white/50 text-xs" id="tournamentUpdatedAt"></span>
+                                </div>
+                                <div class="space-y-3" id="tournamentInfoView">
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Даты проведения</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentDatesDisplay">
+                                            {% if tournament.start_date and tournament.end_date %}
+                                                {{ tournament.start_date | format_date }} – {{ tournament.end_date | format_date }}
+                                            {% elif tournament.start_date %}
+                                                {{ tournament.start_date | format_date }}
+                                            {% elif tournament.end_date %}
+                                                {{ tournament.end_date | format_date }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Вид спорта</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentSportDisplay">{{ tournament.sport or '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Года рождения</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentBirthYearsDisplay">{{ tournament.birth_years_display or '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Формат</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentFormatDisplay">{{ tournament.format or '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Количество команд</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentTeamsDisplay">
+                                            {% if tournament.teams_min and tournament.teams_max %}
+                                                {{ tournament.teams_min }}–{{ tournament.teams_max }}
+                                            {% elif tournament.teams_min %}
+                                                от {{ tournament.teams_min }}
+                                            {% elif tournament.teams_max %}
+                                                до {{ tournament.teams_max }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Взнос за участие</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentEntryFeeDisplay">{{ tournament.entry_fee or '-' }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Edit fields -->
+                                <div class="hidden space-y-3" id="tournamentInfoEdit">
+                                    <div class="grid grid-cols-1 gap-3">
+                                        <div class="flex gap-3">
+                                            <div class="flex-1">
+                                                <label class="text-white/60 text-xs mb-1 block">Дата начала</label>
+                                                <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentStartDateInput" value="{{ tournament.start_date }}">
+                                            </div>
+                                            <div class="flex-1">
+                                                <label class="text-white/60 text-xs mb-1 block">Дата окончания</label>
+                                                <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentEndDateInput" value="{{ tournament.end_date }}">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-white/60 text-xs mb-1 block">Вид спорта</label>
+                                            <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentSportInput" value="{{ tournament.sport }}">
+                                        </div>
+                                        <div>
+                                            <label class="text-white/60 text-xs mb-1 block">Года рождения (через запятую)</label>
+                                            <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentBirthYearsInput" value="{{ tournament.birth_years_list | join(', ') }}">
+                                        </div>
+                                        <div>
+                                            <label class="text-white/60 text-xs mb-1 block">Формат</label>
+                                            <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentFormatInput" value="{{ tournament.format }}">
+                                        </div>
+                                        <div class="flex gap-3">
+                                            <div class="flex-1">
+                                                <label class="text-white/60 text-xs mb-1 block">Команд минимум</label>
+                                                <input type="number" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentTeamsMinInput" value="{{ tournament.teams_min }}">
+                                            </div>
+                                            <div class="flex-1">
+                                                <label class="text-white/60 text-xs mb-1 block">Команд максимум</label>
+                                                <input type="number" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentTeamsMaxInput" value="{{ tournament.teams_max }}">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-white/60 text-xs mb-1 block">Взнос за участие</label>
+                                            <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentEntryFeeInput" value="{{ tournament.entry_fee }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Organizer & Contact Info -->
+                        <div class="space-y-6">
+                            <!-- Organizer Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                                <h2 class="text-white text-lg font-bold">Организатор</h2>
+                                <div id="tournamentOrganizerView" class="space-y-3">
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Название</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentOrganizerDisplay">{{ tournament.organizer_name or '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs mb-1">Контакты</p>
+                                        <p class="text-white text-sm font-medium" id="tournamentContactDisplay">{{ tournament.contact or '-' }}</p>
+                                    </div>
+                                </div>
+                                <div id="tournamentOrganizerEdit" class="hidden space-y-3">
+                                    <div>
+                                        <label class="text-white/60 text-xs mb-1 block">Название</label>
+                                        <input type="text" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" id="tournamentOrganizerInput" value="{{ tournament.organizer_name }}">
+                                    </div>
+                                    <div>
+                                        <label class="text-white/60 text-xs mb-1 block">Контакты</label>
+                                        <textarea class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" rows="3" id="tournamentContactInput">{{ tournament.contact }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accommodation Card -->
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                                <h2 class="text-white text-lg font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">hotel</span>
+                                    Размещение
+                                </h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm">apartment</span>
+                                            Пансионат "Кабардинка"
+                                        </h3>
+                                        <div class="space-y-1 text-white/80 text-sm ml-6">
+                                            <p>3-местное — 3700 / 4300 руб</p>
+                                            <p>2-местное — 3900 / 4500 руб</p>
+                                            <p>1-местное — 4300 / 5500 руб</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm">apartment</span>
+                                            Отель "Ахилеон"
+                                        </h3>
+                                        <div class="space-y-1 text-white/80 text-sm ml-6">
+                                            <p>3-местное — 3700 руб</p>
+                                            <p>2-местное — 3900 руб</p>
+                                            <p>1-местное — 4300 руб</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Info - только если есть содержательные данные -->
+                            {% if tournament.addons and tournament.addons.strip() and tournament.addons.strip() != '—' and tournament.addons.strip() != '' and tournament.addons.strip()|length > 5 %}
+                            <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                                <h2 class="text-white text-lg font-bold">Дополнительная информация</h2>
+                                <div id="tournamentAddonsView">
+                                    <p class="text-white/80 text-sm whitespace-pre-line" id="tournamentAddonsDisplay">{{ tournament.addons }}</p>
+                                </div>
+                                <div id="tournamentAddonsEdit" class="hidden">
+                                    <textarea class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm min-h-[120px]" id="tournamentAddonsInput">{{ tournament.addons }}</textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Full-width Description Section Below Grid -->
+                    <div class="space-y-6 mt-8">
+                        <!-- Main Body Text -->
+                        {% if tournament.body %}
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-white text-xl font-bold">Описание турнира</h2>
+                            </div>
+                            <div id="tournamentBodyView" class="space-y-6">
+                                <div class="prose prose-invert max-w-none" id="tournamentBodyContent">
+                                    <!-- Markdown content will be rendered here by JavaScript -->
+                                </div>
+                            </div>
+                            <div id="tournamentBodyEdit" class="hidden">
+                                <textarea class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm min-h-[240px]" id="tournamentBodyInput">{{ tournament.body }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Selling Text -->
+                        {% if tournament.selling_text %}
+                        <div data-slot="card" class="bg-white/10 backdrop-blur-xl border border-white/10 text-white flex flex-col gap-6 rounded-xl px-6 py-6 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-white text-xl font-bold">Продающий текст</h2>
+                            </div>
+                            <div id="sellingTextView" class="prose prose-invert max-w-none">
+                                {{ tournament.selling_text | safe }}
+                            </div>
+                            <div id="sellingTextEdit" class="hidden">
+                                <textarea class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm min-h-[240px]" id="tournamentSellingTextInput">{{ tournament.selling_text }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.prose {
+    color: rgba(255, 255, 255, 0.8);
+}
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: white;
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+.prose p {
+    margin-bottom: 1em;
+}
+.prose ul, .prose ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+.prose li {
+    margin-bottom: 0.5em;
+}
+.prose strong {
+    color: white;
+    font-weight: bold;
+}
+.prose a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+.prose a:hover {
+    color: #60a5fa;
+}
+</style>
+
+<!-- Markdown processing library -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+
+<script id="tournament-data-json" type="application/json">{{ tournament.model_dump_json() | safe }}</script>
+<script>
+(function() {
+    console.log('🔧 Tournament JavaScript starting...');
+    let tournamentData = {};
+    try {
+        tournamentData = JSON.parse(document.getElementById('tournament-data-json')?.textContent || '{}');
+        console.log('✅ Tournament data parsed successfully');
+    } catch (error) {
+        console.error('❌ Failed to parse tournament JSON', error);
+        tournamentData = {};
+    }
+
+    const editBtn = document.getElementById('editTournamentBtn');
+    const saveBtn = document.getElementById('saveTournamentBtn');
+    const cancelBtn = document.getElementById('cancelTournamentBtn');
+    const titleDisplay = document.getElementById('tournamentTitleDisplay');
+    const locationDisplay = document.getElementById('tournamentLocationDisplay');
+    const updatedAtLabel = document.getElementById('tournamentUpdatedAt');
+
+    const sectionPairs = [
+        ['tournamentHeaderView', 'tournamentHeaderEdit'],
+        ['tournamentInfoView', 'tournamentInfoEdit'],
+        ['tournamentOrganizerView', 'tournamentOrganizerEdit'],
+        ['tournamentAddonsView', 'tournamentAddonsEdit'],
+        ['tournamentBodyView', 'tournamentBodyEdit'],
+        ['sellingTextView', 'sellingTextEdit']
+    ].filter(([viewId, editId]) => {
+        const viewEl = document.getElementById(viewId);
+        const editEl = document.getElementById(editId);
+        console.log('Checking pair: ' + viewId + ' (' + !!viewEl + ') / ' + editId + ' (' + !!editEl + ')');
+        return viewEl && editEl;
+    });
+
+    const fieldRefs = {
+        title: document.getElementById('tournamentTitleInput'),
+        city: document.getElementById('tournamentCityInput'),
+        region: document.getElementById('tournamentRegionInput'),
+        description_short: document.getElementById('tournamentDescriptionShortInput'),
+        start_date: document.getElementById('tournamentStartDateInput'),
+        end_date: document.getElementById('tournamentEndDateInput'),
+        sport: document.getElementById('tournamentSportInput'),
+        birth_years: document.getElementById('tournamentBirthYearsInput'),
+        format: document.getElementById('tournamentFormatInput'),
+        teams_min: document.getElementById('tournamentTeamsMinInput'),
+        teams_max: document.getElementById('tournamentTeamsMaxInput'),
+        entry_fee: document.getElementById('tournamentEntryFeeInput'),
+        organizer_name: document.getElementById('tournamentOrganizerInput'),
+        contact: document.getElementById('tournamentContactInput'),
+        addons: document.getElementById('tournamentAddonsInput'),
+        body: document.getElementById('tournamentBodyInput'),
+        selling_text: document.getElementById('tournamentSellingTextInput')
+    };
+    
+    // Debug: Check which field inputs are missing
+    Object.entries(fieldRefs).forEach(([key, element]) => {
+        if (!element) {
+            console.warn('Missing input element for field: ' + key);
+        }
+    });
+
+    function normalizeBirthYears(value) {
+        if (!value) return [];
+        if (Array.isArray(value)) {
+            return value.map(String).filter(Boolean);
+        }
+        if (typeof value === 'string') {
+            return value.split(',').map(part => part.trim()).filter(Boolean);
+        }
+        return [];
+    }
+
+    function formatBirthYearsDisplay(years) {
+        if (!years.length) return '—';
+        const numeric = years
+            .map(item => parseInt(String(item).replace(/\D/g, ''), 10))
+            .filter(num => !Number.isNaN(num))
+            .sort((a, b) => a - b);
+        if (!numeric.length) {
+            return years.join(', ');
+        }
+        if (numeric.length === 1) {
+            return numeric[0] + ' г.р.';
+        }
+        return numeric[0] + ' - ' + numeric[numeric.length - 1] + ' г.р.';
+    }
+
+    tournamentData.birth_years_list = normalizeBirthYears(tournamentData.birth_years);
+    tournamentData.birth_years_display = formatBirthYearsDisplay(tournamentData.birth_years_list);
+
+    let originalData = JSON.parse(JSON.stringify(tournamentData));
+
+    // Функция для форматирования даты в формат ДД/ММ/ГГГГ
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        
+        try {
+            // Парсим дату в формате ГГГГ-ММ-ДД
+            const date = new Date(dateString + 'T00:00:00'); // Добавляем время для корректного парсинга
+            if (isNaN(date.getTime())) return dateString;
+            
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return day + '/' + month + '/' + year;
+        } catch (error) {
+            console.warn('Error formatting date:', dateString, error);
+            return dateString;
+        }
+    }
+    
+    // Функция для форматирования всех дат на странице
+    function formatAllDatesOnPage() {
+        console.log('Formatting all dates on page...');
+        
+        // Форматируем даты в карточке
+        const datesCardEl = document.getElementById('tournamentDatesCard');
+        if (datesCardEl) {
+            const spans = datesCardEl.querySelectorAll('span.block');
+            spans.forEach(span => {
+                const text = span.textContent.trim();
+                if (text && text.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    span.textContent = formatDate(text);
+                }
+            });
+        }
+        
+        // Форматируем даты в основной информации
+        const datesDisplayEl = document.getElementById('tournamentDatesDisplay');
+        if (datesDisplayEl) {
+            const text = datesDisplayEl.textContent;
+            if (text && text.includes('–')) {
+                const dates = text.split('–').map(d => d.trim());
+                const formattedDates = dates.map(date => {
+                    return date.match(/^\d{4}-\d{2}-\d{2}$/) ? formatDate(date) : date;
+                });
+                datesDisplayEl.textContent = formattedDates.join(' – ');
+            } else if (text && text.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                datesDisplayEl.textContent = formatDate(text);
+            }
+        }
+        
+        console.log('Date formatting completed');
+    }
+
+    function toggleEditMode(enable) {
+        console.log('toggleEditMode called with enable:', enable);
+        console.log('sectionPairs found:', sectionPairs.length);
+        
+        sectionPairs.forEach(([viewId, editId]) => {
+            const viewEl = document.getElementById(viewId);
+            const editEl = document.getElementById(editId);
+            
+            console.log('Processing section: ' + viewId + ' -> ' + editId);
+            console.log('View element found: ' + !!viewEl + ', Edit element found: ' + !!editEl);
+            
+            if (viewEl) viewEl.classList.toggle('hidden', enable);
+            if (editEl) editEl.classList.toggle('hidden', !enable);
+        });
+        
+        console.log('Toggling button visibility...');
+        if (editBtn) {
+            editBtn.classList.toggle('hidden', enable);
+            console.log('Edit button hidden:', enable);
+        }
+        if (saveBtn) {
+            saveBtn.classList.toggle('hidden', !enable);
+            console.log('Save button hidden:', !enable);
+        }
+        if (cancelBtn) {
+            cancelBtn.classList.toggle('hidden', !enable);
+            console.log('Cancel button hidden:', !enable);
+        }
+    }
+
+    function resetForm() {
+        Object.entries(fieldRefs).forEach(([key, input]) => {
+            if (!input) return;
+            const value = originalData[key] ?? '';
+            input.value = Array.isArray(value) ? value.join(', ') : (value ?? '');
+        });
+        if (updatedAtLabel) {
+            if (originalData.updated_at) {
+                try {
+                    updatedAtLabel.textContent = 'Обновлено ' + new Date(originalData.updated_at).toLocaleString('ru-RU');
+                } catch (e) {
+                    updatedAtLabel.textContent = '';
+                }
+            } else {
+                updatedAtLabel.textContent = '';
+            }
+        }
+        updateView(originalData);
+        toggleEditMode(false);
+    }
+
+    async function saveChanges() {
+        const payload = {};
+        const birthYearsInput = fieldRefs.birth_years;
+        const birthYearsRaw = birthYearsInput ? birthYearsInput.value.trim() : '';
+        const birthYearsList = birthYearsRaw ? birthYearsRaw.split(',').map(y => y.trim()).filter(Boolean) : null;
+
+        payload.title = fieldRefs.title?.value.trim() || tournamentData.title;
+        payload.city = fieldRefs.city?.value.trim() || null;
+        payload.region = fieldRefs.region?.value.trim() || null;
+        payload.start_date = fieldRefs.start_date?.value.trim() || null;
+        payload.end_date = fieldRefs.end_date?.value.trim() || null;
+        payload.sport = fieldRefs.sport?.value?.trim() || null;
+        payload.birth_years = birthYearsList;
+        payload.format = fieldRefs.format?.value.trim() || null;
+        payload.teams_min = fieldRefs.teams_min?.value ? parseInt(fieldRefs.teams_min.value, 10) : null;
+        payload.teams_max = fieldRefs.teams_max?.value ? parseInt(fieldRefs.teams_max.value, 10) : null;
+        payload.entry_fee = fieldRefs.entry_fee?.value.trim() || null;
+        payload.organizer_name = fieldRefs.organizer_name?.value.trim() || null;
+        payload.contact = fieldRefs.contact?.value.trim() || null;
+        payload.addons = fieldRefs.addons?.value.trim() || null;
+        payload.body = fieldRefs.body ? fieldRefs.body.value : null;
+        payload.selling_text = fieldRefs.selling_text ? fieldRefs.selling_text.value : null;
+        payload.description_short = fieldRefs.description_short ? fieldRefs.description_short.value : null;
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Сохранение...';
+
+        try {
+            const response = await fetch('/api/tournaments/{{ tournament.id }}', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Не удалось сохранить изменения');
+            }
+            const updated = await response.json();
+            originalData = updated;
+            updateView(updated);
+            toggleEditMode(false);
+            window.loadTournaments?.();
+            alert('Изменения сохранены');
+        } catch (error) {
+            console.error('Error updating tournament:', error);
+            alert('Ошибка сохранения: ' + error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<span class="material-symbols-outlined text-sm">save</span> Сохранить';
+        }
+    }
+
+    function updateView(data) {
+        titleDisplay.textContent = data.title || '';
+        if (locationDisplay) {
+            const location = [data.city, data.region].filter(Boolean).join(', ');
+            locationDisplay.textContent = location || ' ';
+        }
+        const datesEl = document.getElementById('tournamentDatesDisplay');
+        if (datesEl) {
+            const startFormatted = formatDate(data.start_date);
+            const endFormatted = formatDate(data.end_date);
+            
+            datesEl.textContent = startFormatted && endFormatted
+                ? startFormatted + ' – ' + endFormatted
+                : (startFormatted || endFormatted || '-');
+        }
+        
+        // Обновляем карточку с датами
+        const datesCardEl = document.getElementById('tournamentDatesCard');
+        if (datesCardEl) {
+            const startFormatted = formatDate(data.start_date);
+            const endFormatted = formatDate(data.end_date);
+            
+            if (startFormatted && endFormatted) {
+                datesCardEl.innerHTML = 
+                    '<span class="block">' + startFormatted + '</span>' +
+                    '<span class="block text-white/60 text-sm my-1">–</span>' +
+                    '<span class="block">' + endFormatted + '</span>';
+            } else if (startFormatted || endFormatted) {
+                datesCardEl.textContent = startFormatted || endFormatted;
+            } else {
+                datesCardEl.textContent = 'Не указаны';
+            }
+        }
+        const sportEl = document.getElementById('tournamentSportDisplay');
+        if (sportEl) sportEl.textContent = data.sport || '-';
+        const birthEl = document.getElementById('tournamentBirthYearsDisplay');
+        if (birthEl) birthEl.textContent = data.birth_years_display || '-';
+        const formatEl = document.getElementById('tournamentFormatDisplay');
+        if (formatEl) formatEl.textContent = data.format || '-';
+        const teamsEl = document.getElementById('tournamentTeamsDisplay');
+        if (teamsEl) {
+            teamsEl.textContent = data.teams_min && data.teams_max
+                ? data.teams_min + '–' + data.teams_max
+                : data.teams_min ? 'от ' + data.teams_min : data.teams_max ? 'до ' + data.teams_max : '-';
+        }
+        const entryEl = document.getElementById('tournamentEntryFeeDisplay');
+        if (entryEl) entryEl.textContent = data.entry_fee || '-';
+        document.getElementById('tournamentOrganizerDisplay')?.replaceChildren(document.createTextNode(data.organizer_name || '-'));
+        document.getElementById('tournamentContactDisplay')?.replaceChildren(document.createTextNode(data.contact || '-'));
+        document.getElementById('tournamentAddonsDisplay')?.replaceChildren(document.createTextNode(data.addons || '—'));
+        
+        // Обновляем заголовок и описание в объединенном блоке уже обновлены выше
+        
+        // Обновляем описание в объединенном блоке, если есть элемент
+        const descriptionElement = document.querySelector('#tournamentHeaderView .text-white\\/85');
+        if (descriptionElement && data.description_short) {
+            descriptionElement.textContent = data.description_short;
+        }
+        
+        // Обновляем body контент с markdown рендерингом
+        const bodyContentEl = document.getElementById('tournamentBodyContent');
+        if (bodyContentEl && data.body) {
+            try {
+                if (typeof marked !== 'undefined') {
+                    const htmlContent = marked.parse(data.body);
+                    bodyContentEl.innerHTML = htmlContent;
+                } else {
+                    const processedText = data.body
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br>');
+                    bodyContentEl.innerHTML = '<p>' + processedText + '</p>';
+                }
+            } catch (error) {
+                console.error('Error rendering markdown in updateView:', error);
+                bodyContentEl.textContent = data.body;
+            }
+        }
+        
+        const sellingView = document.getElementById('sellingTextView');
+        if (sellingView) {
+            sellingView.innerHTML = data.selling_text || '';
+        }
+        if (updatedAtLabel && data.updated_at) {
+            try {
+                updatedAtLabel.textContent = 'Обновлено ' + new Date(data.updated_at).toLocaleString('ru-RU');
+            } catch (e) {
+                updatedAtLabel.textContent = '';
+            }
+        }
+    }
+
+    // Debug: Check if buttons exist
+    console.log('Edit button found:', !!editBtn);
+    console.log('Save button found:', !!saveBtn);
+    console.log('Cancel button found:', !!cancelBtn);
+    
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            console.log('Edit button clicked');
+            toggleEditMode(true);
+        });
+    } else {
+        console.error('Edit button not found!');
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', resetForm);
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveChanges);
+    }
+    
+    // Функция для рендеринга markdown контента
+    function renderMarkdownContent() {
+        const bodyContentEl = document.getElementById('tournamentBodyContent');
+        if (bodyContentEl && tournamentData.body) {
+            try {
+                // Используем marked.js для рендеринга markdown
+                if (typeof marked !== 'undefined') {
+                    const htmlContent = marked.parse(tournamentData.body);
+                    bodyContentEl.innerHTML = htmlContent;
+                    console.log('✅ Markdown content rendered successfully');
+                } else {
+                    // Fallback: показываем как обычный текст с базовой обработкой
+                    const processedText = tournamentData.body
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br>');
+                    bodyContentEl.innerHTML = '<p>' + processedText + '</p>';
+                    console.log('✅ Basic text formatting applied (marked.js not available)');
+                }
+            } catch (error) {
+                console.error('❌ Error rendering markdown:', error);
+                // Fallback: показываем как обычный текст
+                bodyContentEl.textContent = tournamentData.body;
+            }
+        }
+    }
+
+    // Инициализируем страницу после загрузки DOM
+    function initializePage() {
+        console.log('🚀 Initializing tournament page...');
+        
+        // Форматируем все даты на странице
+        setTimeout(() => {
+            formatAllDatesOnPage();
+        }, 100);
+        
+        // Рендерим markdown контент
+        setTimeout(() => {
+            renderMarkdownContent();
+        }, 200);
+        
+        resetForm();
+        
+        // Отладочная информация для addons
+        console.log('Tournament addons field:', tournamentData.addons);
+        console.log('Addons length:', tournamentData.addons ? tournamentData.addons.length : 0);
+        
+        console.log('✅ Tournament page initialization completed');
+    }
+    
+    // Запускаем инициализацию после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+        initializePage();
+    }
+})();
+
+// Публикация в Telegraph/Teletype
+async function publishToTelegraph() {
+    const btn = document.getElementById('publishTelegraphBtn');
+    const btnText = document.getElementById('publishBtnText');
+    const tournamentId = {{ tournament.id }};
+    const hasExisting = {{ 'true' if tournament.telegraph_url else 'false' }};
+    
+    const originalText = btnText.textContent;
+    btn.disabled = true;
+    btnText.textContent = 'Публикация...';
+    
+    try {
+        const endpoint = hasExisting 
+            ? `/api/teletype/update/${tournamentId}`
+            : `/api/teletype/publish/${tournamentId}`;
+        const method = hasExisting ? 'PUT' : 'POST';
+        
+        const response = await fetch(endpoint, { method });
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ ' + result.message + '\n\nСсылка: ' + result.url);
+            btnText.textContent = 'Обновить в Teletype';
+            // Перезагрузим страницу, чтобы показать ссылку
+            window.location.reload();
+        } else {
+            alert('❌ Ошибка: ' + (result.detail || result.error || 'Неизвестная ошибка'));
+            btnText.textContent = originalText;
+        }
+    } catch (error) {
+        alert('❌ Ошибка сети: ' + error.message);
+        btnText.textContent = originalText;
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+
+<!-- Shadcn Components -->
+<script src="/static/components/card.js"></script>
+<script src="/static/components/aspect-ratio.js"></script>
+<script src="/static/components/badge.js"></script>
+<script src="/static/components/table.js"></script>
+
+{% endblock %}

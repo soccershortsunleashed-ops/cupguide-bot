@@ -1,0 +1,1064 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* Tournament Edit Page Styles */
+[data-slot="card"] {
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-slot="input"], [data-slot="textarea"] {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+[data-slot="input"]:focus, [data-slot="textarea"]:focus {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+[data-slot="button"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+
+[data-slot="button"][data-variant="default"] {
+    background: rgba(59, 130, 246, 0.8);
+    color: white;
+    border: 1px solid rgba(59, 130, 246, 0.6);
+}
+
+[data-slot="button"][data-variant="default"]:hover {
+    background: rgba(59, 130, 246, 0.9);
+    transform: translateY(-1px);
+}
+
+[data-slot="button"][data-variant="outline"] {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-slot="button"][data-variant="outline"]:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+[data-slot="button"][data-variant="ghost"] {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+}
+
+[data-slot="button"][data-variant="ghost"]:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: #ef4444;
+}
+
+.char-counter {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.25rem;
+    text-align: right;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.page-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 640px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons button {
+        width: 100%;
+    }
+}
+</style>
+
+<!-- Main Container -->
+<div class="flex flex-1 flex-col">
+    <div class="@container/main flex flex-1 flex-col gap-2">
+        <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div class="px-4 lg:px-6">
+                <!-- Header -->
+                <div class="mb-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <a href="/tournaments/{{ tournament.id }}" class="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            <span class="text-sm">Назад к турниру</span>
+                        </a>
+                        <div class="flex items-center gap-2 text-white/60 text-xs">
+                            <span class="material-symbols-outlined text-base">edit</span>
+                            <span>Редактирование турнира</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1 class="text-white text-3xl font-bold leading-tight mb-2">
+                        Редактирование турнира
+                    </h1>
+                    <p class="text-white/70 text-lg">
+                        Измените информацию о турнире и сохраните изменения
+                    </p>
+                </div>
+
+                <!-- Edit Form -->
+                <div class="form-container">
+                    <form id="editTournamentForm" class="space-y-6">
+                        <!-- Basic Information Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">info</span>
+                                Основная информация
+                            </h2>
+                            
+                            <div class="space-y-4">
+                                <!-- Tournament Title -->
+                                <div class="form-group">
+                                    <label for="title" class="form-label required">Название турнира</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="title" 
+                                        name="title"
+                                        value="{% if tournament %}{{ tournament.title }}{% endif %}"
+                                        placeholder="Введите название турнира"
+                                        minlength="10"
+                                        maxlength="120"
+                                        required
+                                    />
+                                    <div class="char-counter">
+                                        <span id="titleCounter">{{ tournament.title|length if tournament.title else 0 }}</span>/120 символов
+                                    </div>
+                                </div>
+
+                                <!-- Short Description -->
+                                <div class="form-group">
+                                    <label for="shortDescription" class="form-label">Краткое описание</label>
+                                    <textarea 
+                                        data-slot="textarea"
+                                        id="shortDescription" 
+                                        name="shortDescription"
+                                        placeholder="Краткое описание для анонса"
+                                        maxlength="400"
+                                        rows="3"
+                                    >{% if tournament %}{{ tournament.short_description }}{% endif %}</textarea>
+                                    <div class="char-counter">
+                                        <span id="shortDescCounter">{{ tournament.short_description|length if tournament.short_description else 0 }}</span>/400 символов
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">description</span>
+                                Содержание турнира
+                            </h2>
+                            
+                            <!-- Tournament Body -->
+                            <div class="form-group">
+                                <label for="body" class="form-label required">Полное описание (Markdown)</label>
+                                <textarea 
+                                    data-slot="textarea"
+                                    id="body" 
+                                    name="body"
+                                    placeholder="Введите полное описание турнира в формате Markdown..."
+                                    maxlength="15000"
+                                    rows="15"
+                                    required
+                                >{% if tournament %}{{ tournament.body }}{% endif %}</textarea>
+                                <div class="char-counter">
+                                    <span id="bodyCounter">{{ tournament.body|length if tournament.body else 0 }}</span>/15000 символов
+                                </div>
+                                <div class="text-xs text-white/50 mt-2">
+                                    💡 Поддерживается Markdown разметка: заголовки, списки, таблицы, ссылки
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Images Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">image</span>
+                                Изображения турнира
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Square Image (for Telegram) -->
+                                <div class="form-group">
+                                    <label class="form-label">Квадратная картинка (для Telegram)</label>
+                                    <div class="text-xs text-white/50 mb-2">Рекомендуемый размер: 512x512 px</div>
+                                    
+                                    <div id="squareImagePreview" class="mb-3 rounded-lg overflow-hidden bg-black/20 border border-white/10" style="width: 200px; height: 200px;">
+                                        {% if tournament.image_cover_square_url %}
+                                        <img src="{{ tournament.image_cover_square_url }}" alt="Квадратная картинка" class="w-full h-full object-cover" id="squarePreviewImg">
+                                        {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-white/30" id="squarePreviewPlaceholder">
+                                            <span class="material-symbols-outlined text-4xl">add_photo_alternate</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <input type="file" id="squareImageInput" accept="image/*" class="hidden">
+                                    <div class="flex gap-2">
+                                        <button type="button" onclick="document.getElementById('squareImageInput').click()" data-slot="button" data-variant="outline" class="text-sm py-2 px-3">
+                                            <span class="material-symbols-outlined text-sm">upload</span>
+                                            Загрузить
+                                        </button>
+                                        <button type="button" id="removeSquareBtn" data-slot="button" data-variant="ghost" class="text-sm py-2 px-3 text-red-400 hover:text-red-300 {% if not tournament.image_cover_square_url %}hidden{% endif %}">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                            Удалить
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Original Image -->
+                                <div class="form-group">
+                                    <label class="form-label">Оригинальная картинка</label>
+                                    <div class="text-xs text-white/50 mb-2">Любой размер, будет использоваться на сайте</div>
+                                    
+                                    <div id="originalImagePreview" class="mb-3 rounded-lg overflow-hidden bg-black/20 border border-white/10" style="width: 200px; height: 150px;">
+                                        {% if tournament.image_original_url %}
+                                        <img src="{{ tournament.image_original_url }}" alt="Оригинальная картинка" class="w-full h-full object-cover" id="originalPreviewImg">
+                                        {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-white/30" id="originalPreviewPlaceholder">
+                                            <span class="material-symbols-outlined text-4xl">add_photo_alternate</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <input type="file" id="originalImageInput" accept="image/*" class="hidden">
+                                    <div class="flex gap-2">
+                                        <button type="button" onclick="document.getElementById('originalImageInput').click()" data-slot="button" data-variant="outline" class="text-sm py-2 px-3">
+                                            <span class="material-symbols-outlined text-sm">upload</span>
+                                            Загрузить
+                                        </button>
+                                        <button type="button" id="removeOriginalBtn" data-slot="button" data-variant="ghost" class="text-sm py-2 px-3 text-red-400 hover:text-red-300 {% if not tournament.image_original_url %}hidden{% endif %}">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                            Удалить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                                <div class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
+                                    <div class="text-xs text-white/70">
+                                        <strong class="text-white/90">Важно:</strong> Квадратная картинка используется для отправки в Telegram. 
+                                        Загрузите готовую квадратную картинку - автоматическая обрезка отключена.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">tune</span>
+                                Дополнительная информация
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- City -->
+                                <div class="form-group">
+                                    <label for="city" class="form-label">Город</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="city" 
+                                        name="city"
+                                        value="{% if tournament %}{{ tournament.city }}{% endif %}"
+                                        placeholder="Город проведения"
+                                    />
+                                </div>
+
+                                <!-- Region -->
+                                <div class="form-group">
+                                    <label for="region" class="form-label">Регион</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="region" 
+                                        name="region"
+                                        value="{% if tournament %}{{ tournament.region }}{% endif %}"
+                                        placeholder="Регион проведения"
+                                    />
+                                </div>
+
+                                <!-- Sport -->
+                                <div class="form-group">
+                                    <label for="sport" class="form-label">Вид спорта</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="sport" 
+                                        name="sport"
+                                        value="{% if tournament %}{{ tournament.sport }}{% endif %}"
+                                        placeholder="Вид спорта"
+                                    />
+                                </div>
+
+                                <!-- Entry Fee -->
+                                <div class="form-group">
+                                    <label for="entry_fee" class="form-label">Взнос за участие</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="entry_fee" 
+                                        name="entry_fee"
+                                        value="{% if tournament %}{{ tournament.entry_fee }}{% endif %}"
+                                        placeholder="Размер взноса"
+                                    />
+                                </div>
+
+                                <!-- Start Date -->
+                                <div class="form-group">
+                                    <label for="start_date" class="form-label">Дата начала</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="start_date" 
+                                        name="start_date"
+                                        value="{% if tournament %}{{ tournament.start_date }}{% endif %}"
+                                        placeholder="ДД.ММ.ГГГГ"
+                                    />
+                                </div>
+
+                                <!-- End Date -->
+                                <div class="form-group">
+                                    <label for="end_date" class="form-label">Дата окончания</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="end_date" 
+                                        name="end_date"
+                                        value="{% if tournament %}{{ tournament.end_date }}{% endif %}"
+                                        placeholder="ДД.ММ.ГГГГ"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">contacts</span>
+                                Контактная информация
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Organizer Name -->
+                                <div class="form-group">
+                                    <label for="organizer_name" class="form-label">Название организатора</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="organizer_name" 
+                                        name="organizer_name"
+                                        value="{% if tournament %}{{ tournament.organizer_name }}{% endif %}"
+                                        placeholder="Название организации или клуба"
+                                    />
+                                </div>
+
+                                <!-- Contact Person -->
+                                <div class="form-group">
+                                    <label for="contact_person" class="form-label">Контактное лицо</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="contact_person" 
+                                        name="contact_person"
+                                        value="{% if tournament %}{{ tournament.contact_person }}{% endif %}"
+                                        placeholder="Имя контактного лица"
+                                    />
+                                </div>
+
+                                <!-- Contact Phone -->
+                                <div class="form-group">
+                                    <label for="contact" class="form-label">Телефон</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="contact" 
+                                        name="contact"
+                                        value="{% if tournament %}{{ tournament.contact }}{% endif %}"
+                                        placeholder="+7 XXX XXX-XX-XX"
+                                    />
+                                </div>
+
+                                <!-- Format -->
+                                <div class="form-group">
+                                    <label for="format" class="form-label">Формат турнира</label>
+                                    <input 
+                                        data-slot="input"
+                                        type="text" 
+                                        id="format" 
+                                        name="format"
+                                        value="{% if tournament %}{{ tournament.format }}{% endif %}"
+                                        placeholder="Например: 8+1, 6+1"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priority Rating Section -->
+                        <div data-slot="card" class="form-section p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">star</span>
+                                Приоритетный рейтинг
+                            </h2>
+                            
+                            <div class="space-y-4">
+                                <!-- Priority Rating Checkbox -->
+                                <!-- Рейтинг ⭐ -->
+                                <div class="form-group">
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            id="priority_rating" 
+                                            name="priority_rating"
+                                            {% if tournament.priority_rating %}checked{% endif %}
+                                            class="w-5 h-5 rounded border-white/20 bg-black/30 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
+                                        />
+                                        <span class="text-white/90">⭐ Рейтинговый турнир</span>
+                                    </label>
+                                    <div class="text-xs text-white/50 mt-2 ml-8">
+                                        Эксклюзивная рекомендация сервиса. Показывается первым с пометкой "Рекомендуемый турнир"
+                                    </div>
+                                </div>
+                                
+                                <!-- Rating Days Remaining -->
+                                <div id="priorityDaysInfo" class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg {% if not tournament.priority_rating %}hidden{% endif %}">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-yellow-400">schedule</span>
+                                        <span class="text-white/90" id="priorityDaysText">
+                                            {% if tournament.priority_rating_start_date %}
+                                                Рейтинг: <strong id="daysRemaining">--</strong> дн. из 45
+                                            {% else %}
+                                                Рейтинг будет активирован при сохранении (45 дней)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <hr class="border-white/10 my-4">
+                                
+                                <!-- Премиум 🔝 -->
+                                <div class="form-group">
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            id="is_premium" 
+                                            name="is_premium"
+                                            {% if tournament.is_premium %}checked{% endif %}
+                                            class="w-5 h-5 rounded border-white/20 bg-black/30 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                                        />
+                                        <span class="text-white/90">🔝 Премиум-размещение</span>
+                                    </label>
+                                    <div class="text-xs text-white/50 mt-2 ml-8">
+                                        Усиленная видимость (7 дней). Показывается выше обычных турниров (после рейтинговых)
+                                    </div>
+                                </div>
+                                
+                                <!-- Premium Info & Controls -->
+                                <div id="premiumInfo" class="{% if not tournament.is_premium %}hidden{% endif %}">
+                                    <!-- Статус премиума -->
+                                    <div class="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-blue-300 text-sm font-medium">Статус премиума</span>
+                                            <span id="premiumDaysRemaining" class="text-blue-400 text-sm font-bold">--</span>
+                                        </div>
+                                        
+                                        <!-- Дата окончания -->
+                                        <div class="form-group mt-2">
+                                            <label for="premium_until" class="text-xs text-white/60">Действует до:</label>
+                                            <input 
+                                                data-slot="input"
+                                                type="date" 
+                                                id="premium_until" 
+                                                name="premium_until"
+                                                value="{{ tournament.premium_until or '' }}"
+                                                class="mt-1"
+                                            />
+                                        </div>
+                                        
+                                        <!-- Кнопки продления -->
+                                        <div class="flex gap-2 mt-3">
+                                            <button type="button" onclick="extendPremium(7)" 
+                                                class="flex-1 px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/30 rounded-lg text-blue-300 text-xs font-medium transition-all">
+                                                +7 дней (2000₽)
+                                            </button>
+                                            <button type="button" onclick="extendPremium(1)" 
+                                                class="flex-1 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/20 rounded-lg text-blue-300 text-xs font-medium transition-all">
+                                                +1 день (500₽)
+                                            </button>
+                                        </div>
+                                        <div class="text-xs text-white/40 mt-2 text-center">
+                                            Продление возможно только при активном премиуме
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 24ч ограничение (показывается если премиум недавно закончился) -->
+                                {% if tournament.premium_last_ended %}
+                                <div id="premiumCooldown" class="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-orange-400 text-sm">schedule</span>
+                                        <span class="text-orange-300 text-xs" id="premiumCooldownText">
+                                            Проверка ограничения...
+                                        </span>
+                                    </div>
+                                </div>
+                                <script>
+                                    (function() {
+                                        const lastEnded = new Date('{{ tournament.premium_last_ended }}');
+                                        const now = new Date();
+                                        const hoursSince = (now - lastEnded) / (1000 * 60 * 60);
+                                        const cooldownEl = document.getElementById('premiumCooldown');
+                                        const textEl = document.getElementById('premiumCooldownText');
+                                        
+                                        if (hoursSince < 24) {
+                                            const hoursRemaining = Math.ceil(24 - hoursSince);
+                                            textEl.textContent = `Новая покупка премиума доступна через ${hoursRemaining} ч.`;
+                                        } else {
+                                            cooldownEl.style.display = 'none';
+                                        }
+                                    })();
+                                </script>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <a href="/tournaments/{{ tournament.id }}" data-slot="button" data-variant="ghost">
+                                <span class="material-symbols-outlined">close</span>
+                                Отмена
+                            </a>
+                            
+                            <button type="button" id="previewBtn" data-slot="button" data-variant="outline">
+                                <span class="material-symbols-outlined">visibility</span>
+                                Предпросмотр
+                            </button>
+                            
+                            <button type="submit" id="saveBtn" data-slot="button" data-variant="default">
+                                <span class="material-symbols-outlined">save</span>
+                                Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tournament Edit Form JavaScript
+class TournamentEditForm {
+    constructor() {
+        this.tournamentId = {{ tournament.id if tournament else 'null' }};
+        this.pendingSquareImage = null;
+        this.pendingOriginalImage = null;
+        this.priorityStartDate = '{{ tournament.priority_rating_start_date or "" }}';
+        this.setupCharacterCounters();
+        this.setupFormSubmission();
+        this.setupPreview();
+        this.setupImageUploads();
+        this.setupPriorityRating();
+    }
+    
+    setupPriorityRating() {
+        const checkbox = document.getElementById('priority_rating');
+        const infoBlock = document.getElementById('priorityDaysInfo');
+        const daysText = document.getElementById('priorityDaysText');
+        const daysRemaining = document.getElementById('daysRemaining');
+        
+        if (checkbox) {
+            // Toggle info block visibility
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    infoBlock.classList.remove('hidden');
+                    if (!this.priorityStartDate) {
+                        daysText.innerHTML = 'Приоритет будет активирован при сохранении (45 дней)';
+                    }
+                } else {
+                    infoBlock.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Calculate remaining days if start date exists
+        if (this.priorityStartDate && daysRemaining) {
+            const startDate = new Date(this.priorityStartDate);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 45);
+            const today = new Date();
+            const diffTime = endDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 0) {
+                daysRemaining.textContent = diffDays;
+                daysText.innerHTML = `Осталось дней: <strong>${diffDays}</strong> из 45`;
+                
+                // Color coding based on remaining days
+                if (diffDays <= 7) {
+                    infoBlock.classList.remove('bg-yellow-500/10', 'border-yellow-500/20');
+                    infoBlock.classList.add('bg-red-500/10', 'border-red-500/20');
+                } else if (diffDays <= 14) {
+                    infoBlock.classList.remove('bg-yellow-500/10', 'border-yellow-500/20');
+                    infoBlock.classList.add('bg-orange-500/10', 'border-orange-500/20');
+                }
+            } else {
+                daysText.innerHTML = '<span class="text-red-400">⚠️ Рейтинг истёк! Снимите галочку или продлите.</span>';
+                infoBlock.classList.remove('bg-yellow-500/10', 'border-yellow-500/20');
+                infoBlock.classList.add('bg-red-500/10', 'border-red-500/20');
+            }
+        }
+        
+        // Премиум-размещение
+        const premiumCheckbox = document.getElementById('is_premium');
+        const premiumInfo = document.getElementById('premiumInfo');
+        
+        if (premiumCheckbox && premiumInfo) {
+            premiumCheckbox.addEventListener('change', () => {
+                if (premiumCheckbox.checked) {
+                    premiumInfo.classList.remove('hidden');
+                    // Если дата не установлена, ставим +7 дней
+                    const premiumUntil = document.getElementById('premium_until');
+                    if (premiumUntil && !premiumUntil.value) {
+                        const date = new Date();
+                        date.setDate(date.getDate() + 7);
+                        premiumUntil.value = date.toISOString().split('T')[0];
+                    }
+                    updatePremiumDaysDisplay();
+                } else {
+                    premiumInfo.classList.add('hidden');
+                }
+            });
+            
+            // Обновляем счётчик при изменении даты
+            const premiumUntil = document.getElementById('premium_until');
+            if (premiumUntil) {
+                premiumUntil.addEventListener('change', updatePremiumDaysDisplay);
+            }
+            
+            // Инициализация счётчика
+            updatePremiumDaysDisplay();
+        }
+    }
+
+    setupImageUploads() {
+        // Square image upload
+        const squareInput = document.getElementById('squareImageInput');
+        const removeSquareBtn = document.getElementById('removeSquareBtn');
+        
+        if (squareInput) {
+            squareInput.addEventListener('change', (e) => this.handleImageSelect(e, 'square'));
+        }
+        
+        if (removeSquareBtn) {
+            removeSquareBtn.addEventListener('click', () => this.removeImage('square'));
+        }
+        
+        // Original image upload
+        const originalInput = document.getElementById('originalImageInput');
+        const removeOriginalBtn = document.getElementById('removeOriginalBtn');
+        
+        if (originalInput) {
+            originalInput.addEventListener('change', (e) => this.handleImageSelect(e, 'original'));
+        }
+        
+        if (removeOriginalBtn) {
+            removeOriginalBtn.addEventListener('click', () => this.removeImage('original'));
+        }
+    }
+
+    handleImageSelect(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение');
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Размер файла не должен превышать 10 МБ');
+            return;
+        }
+        
+        // Store file for upload
+        if (type === 'square') {
+            this.pendingSquareImage = file;
+        } else {
+            this.pendingOriginalImage = file;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewContainer = document.getElementById(type === 'square' ? 'squareImagePreview' : 'originalImagePreview');
+            const placeholder = document.getElementById(type === 'square' ? 'squarePreviewPlaceholder' : 'originalPreviewPlaceholder');
+            let img = document.getElementById(type === 'square' ? 'squarePreviewImg' : 'originalPreviewImg');
+            
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            if (!img) {
+                img = document.createElement('img');
+                img.id = type === 'square' ? 'squarePreviewImg' : 'originalPreviewImg';
+                img.className = 'w-full h-full object-cover';
+                img.alt = type === 'square' ? 'Квадратная картинка' : 'Оригинальная картинка';
+                previewContainer.appendChild(img);
+            }
+            
+            img.src = e.target.result;
+            
+            // Show remove button
+            const removeBtn = document.getElementById(type === 'square' ? 'removeSquareBtn' : 'removeOriginalBtn');
+            if (removeBtn) {
+                removeBtn.classList.remove('hidden');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeImage(type) {
+        if (type === 'square') {
+            this.pendingSquareImage = 'remove';
+        } else {
+            this.pendingOriginalImage = 'remove';
+        }
+        
+        const previewContainer = document.getElementById(type === 'square' ? 'squareImagePreview' : 'originalImagePreview');
+        const img = document.getElementById(type === 'square' ? 'squarePreviewImg' : 'originalPreviewImg');
+        
+        if (img) {
+            img.remove();
+        }
+        
+        // Add placeholder back
+        const placeholder = document.createElement('div');
+        placeholder.id = type === 'square' ? 'squarePreviewPlaceholder' : 'originalPreviewPlaceholder';
+        placeholder.className = 'w-full h-full flex items-center justify-center text-white/30';
+        placeholder.innerHTML = '<span class="material-symbols-outlined text-4xl">add_photo_alternate</span>';
+        previewContainer.appendChild(placeholder);
+        
+        // Hide remove button
+        const removeBtn = document.getElementById(type === 'square' ? 'removeSquareBtn' : 'removeOriginalBtn');
+        if (removeBtn) {
+            removeBtn.classList.add('hidden');
+        }
+        
+        // Clear file input
+        const input = document.getElementById(type === 'square' ? 'squareImageInput' : 'originalImageInput');
+        if (input) {
+            input.value = '';
+        }
+    }
+
+    async uploadImage(file, type) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type); // 'square' or 'original'
+        
+        const response = await fetch(`/api/tournaments/${this.tournamentId}/upload-image`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки ${type === 'square' ? 'квадратной' : 'оригинальной'} картинки`);
+        }
+        
+        return await response.json();
+    }
+
+    setupCharacterCounters() {
+        const counters = [
+            { input: 'title', counter: 'titleCounter', max: 120 },
+            { input: 'shortDescription', counter: 'shortDescCounter', max: 400 },
+            { input: 'body', counter: 'bodyCounter', max: 15000 }
+        ];
+
+        counters.forEach(({ input, counter, max }) => {
+            const inputElement = document.getElementById(input);
+            const counterElement = document.getElementById(counter);
+            
+            if (inputElement && counterElement) {
+                inputElement.addEventListener('input', () => {
+                    const length = inputElement.value.length;
+                    counterElement.textContent = length;
+                    
+                    // Color coding
+                    if (length > max * 0.9) {
+                        counterElement.style.color = '#ef4444';
+                    } else if (length > max * 0.7) {
+                        counterElement.style.color = '#f59e0b';
+                    } else {
+                        counterElement.style.color = 'rgba(255, 255, 255, 0.5)';
+                    }
+                });
+            }
+        });
+    }
+
+    setupFormSubmission() {
+        const form = document.getElementById('editTournamentForm');
+        const saveBtn = document.getElementById('saveBtn');
+        
+        if (form && saveBtn) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.saveTournament();
+            });
+        }
+    }
+
+    setupPreview() {
+        const previewBtn = document.getElementById('previewBtn');
+        
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => {
+                // Open tournament page in new tab for preview
+                window.open(`/tournaments/${this.tournamentId}`, '_blank');
+            });
+        }
+    }
+
+    async saveTournament() {
+        const saveBtn = document.getElementById('saveBtn');
+        const originalText = saveBtn.innerHTML;
+        
+        try {
+            // Show loading state
+            saveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Сохранение...';
+            saveBtn.disabled = true;
+            
+            // Upload images first if any
+            if (this.pendingSquareImage && this.pendingSquareImage !== 'remove') {
+                saveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Загрузка квадратной картинки...';
+                await this.uploadImage(this.pendingSquareImage, 'square');
+            } else if (this.pendingSquareImage === 'remove') {
+                // Remove square image
+                await fetch(`/api/tournaments/${this.tournamentId}/remove-image?type=square`, { method: 'DELETE' });
+            }
+            
+            if (this.pendingOriginalImage && this.pendingOriginalImage !== 'remove') {
+                saveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Загрузка оригинальной картинки...';
+                await this.uploadImage(this.pendingOriginalImage, 'original');
+            } else if (this.pendingOriginalImage === 'remove') {
+                // Remove original image
+                await fetch(`/api/tournaments/${this.tournamentId}/remove-image?type=original`, { method: 'DELETE' });
+            }
+            
+            saveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Сохранение данных...';
+            
+            // Collect form data
+            const formData = new FormData(document.getElementById('editTournamentForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            // Handle priority_rating checkbox (convert to boolean)
+            const priorityCheckbox = document.getElementById('priority_rating');
+            data.priority_rating = priorityCheckbox ? priorityCheckbox.checked : false;
+            
+            // Handle is_premium checkbox (convert to boolean)
+            const premiumCheckbox = document.getElementById('is_premium');
+            data.is_premium = premiumCheckbox ? premiumCheckbox.checked : false;
+            
+            // Handle premium_until date
+            const premiumUntil = document.getElementById('premium_until');
+            if (premiumUntil && premiumUntil.value) {
+                data.premium_until = premiumUntil.value;
+            }
+            
+            // Send update request
+            const response = await fetch(`/api/tournaments/${this.tournamentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                // Success - redirect to tournament page
+                window.location.href = `/tournaments/${this.tournamentId}`;
+            } else {
+                throw new Error('Ошибка сохранения');
+            }
+            
+        } catch (error) {
+            console.error('Error saving tournament:', error);
+            alert('Ошибка при сохранении турнира: ' + error.message);
+            
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+}
+
+// Глобальные функции для премиум-размещения
+
+function updatePremiumDaysDisplay() {
+    const premiumUntil = document.getElementById('premium_until');
+    const daysDisplay = document.getElementById('premiumDaysRemaining');
+    
+    if (!premiumUntil || !daysDisplay) return;
+    
+    if (!premiumUntil.value) {
+        daysDisplay.textContent = 'Дата не установлена';
+        daysDisplay.className = 'text-white/50 text-sm';
+        return;
+    }
+    
+    const endDate = new Date(premiumUntil.value + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Разница в днях
+    const diffDays = Math.floor((endDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+        daysDisplay.textContent = `Осталось ${diffDays} дн.`;
+        daysDisplay.className = 'text-blue-400 text-sm font-bold';
+    } else if (diffDays === 0) {
+        daysDisplay.textContent = 'Последний день!';
+        daysDisplay.className = 'text-orange-400 text-sm font-bold';
+    } else {
+        daysDisplay.textContent = 'Истёк';
+        daysDisplay.className = 'text-red-400 text-sm font-bold';
+    }
+}
+
+async function extendPremium(days) {
+    const tournamentId = {{ tournament.id if tournament else 'null' }};
+    if (!tournamentId) {
+        alert('Ошибка: ID турнира не найден');
+        return;
+    }
+    
+    const action = days === 7 ? 'extend_7days' : 'extend_1day';
+    const price = days === 7 ? '2000₽' : '500₽';
+    
+    if (!confirm(`Продлить премиум на ${days} дн. (${price})?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/tournaments/${tournamentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ premium_action: action })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.detail || 'Ошибка продления');
+        }
+        
+        // Обновляем дату в форме
+        if (result.premium_until) {
+            document.getElementById('premium_until').value = result.premium_until;
+            updatePremiumDaysDisplay();
+        }
+        
+        alert(`✅ Премиум продлён на ${days} дн.`);
+        
+    } catch (error) {
+        alert(`❌ ${error.message}`);
+    }
+}
+
+// Initialize form when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new TournamentEditForm();
+    // Инициализация счётчика премиума
+    updatePremiumDaysDisplay();
+});
+</script>
+
+{% endblock %}
