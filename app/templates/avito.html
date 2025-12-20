@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-white text-2xl font-bold">🛒 Avito Auto-responder</h1>
+            <p class="text-white/60 text-sm">LLM-автоответчик для Авито с AI-скорингом</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="statusBadge" class="px-3 py-1 rounded-full text-sm bg-yellow-500/20 text-yellow-400">
+                ⚙️ Проверка...
+            </span>
+        </div>
+    </div>
+
+    <!-- Config Section -->
+    <div class="glassmorphic rounded-xl p-6">
+        <h2 class="text-white text-lg font-semibold mb-4">⚙️ Настройки подключения</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-white/70 text-sm">AVITO_CLIENT_ID</label>
+                <input type="text" id="avitoClientId" placeholder="Введите Client ID" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+            <div>
+                <label class="text-white/70 text-sm">AVITO_CLIENT_SECRET</label>
+                <input type="password" id="avitoClientSecret" placeholder="Введите Client Secret" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+            <div>
+                <label class="text-white/70 text-sm">AVITO_USER_ID</label>
+                <input type="text" id="avitoUserId" placeholder="Введите User ID" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+            <div>
+                <label class="text-white/70 text-sm">MEGALLM_API_KEY</label>
+                <input type="password" id="megallmApiKey" placeholder="Введите API ключ MegaLLM" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+        </div>
+        
+        <div class="flex gap-3 mt-4">
+            <button onclick="saveConfig()" class="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors">
+                💾 Сохранить настройки
+            </button>
+            <button onclick="testConnection()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                🔌 Проверить подключение
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left: Test Message -->
+        <div class="glassmorphic rounded-xl p-6">
+            <h2 class="text-white text-lg font-semibold mb-4">🧪 Тестирование сообщений</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-white/70 text-sm">Тестовое сообщение</label>
+                    <textarea id="testMessage" rows="3" placeholder="Введите сообщение для тестирования..."
+                        class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none resize-none"></textarea>
+                </div>
+                
+                <button onclick="testMessage()" id="testBtn" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    🚀 Протестировать
+                </button>
+                
+                <!-- Test Result -->
+                <div id="testResult" class="hidden">
+                    <div class="bg-black/30 rounded-lg p-4 space-y-3">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="text-center">
+                                <div class="text-white/50 text-xs mb-1">Грейд</div>
+                                <div id="resultGrade" class="text-2xl font-bold">-</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-white/50 text-xs mb-1">Intent</div>
+                                <div id="resultIntent" class="text-sm text-white">-</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-white/50 text-xs mb-1">Действие</div>
+                                <div id="resultAction" class="text-sm text-white">-</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-white/50 text-xs mb-1">Ответ бота:</div>
+                            <div id="resultReply" class="text-white text-sm bg-black/20 rounded p-2"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <span class="text-white/50">Детерм. скоринг:</span>
+                                <span id="resultDetScore" class="text-white ml-1">-</span>
+                            </div>
+                            <div>
+                                <span class="text-white/50">Уверенность:</span>
+                                <span id="resultConfidence" class="text-white ml-1">-</span>
+                            </div>
+                        </div>
+                        
+                        <div id="resultSlots" class="hidden">
+                            <div class="text-white/50 text-xs mb-1">Слоты:</div>
+                            <div id="resultSlotsContent" class="text-white text-xs bg-black/20 rounded p-2 font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right: KB & Stats -->
+        <div class="space-y-6">
+            <!-- Knowledge Base -->
+            <div class="glassmorphic rounded-xl p-6">
+                <h2 class="text-white text-lg font-semibold mb-4">📚 База знаний</h2>
+                
+                <div id="kbStats" class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="bg-black/30 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-white" id="kbServices">-</div>
+                        <div class="text-white/50 text-xs">Услуг</div>
+                    </div>
+                    <div class="bg-black/30 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-white" id="kbFaq">-</div>
+                        <div class="text-white/50 text-xs">FAQ</div>
+                    </div>
+                    <div class="bg-black/30 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-white" id="kbCases">-</div>
+                        <div class="text-white/50 text-xs">Кейсов</div>
+                    </div>
+                </div>
+                
+                <button onclick="loadKbSummary()" class="w-full px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm">
+                    🔄 Обновить статистику KB
+                </button>
+            </div>
+            
+            <!-- Services List -->
+            <div class="glassmorphic rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-white text-lg font-semibold">💼 Услуги</h2>
+                    <button onclick="loadServices()" class="text-white/50 hover:text-white text-sm">🔄</button>
+                </div>
+                
+                <div id="servicesList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <p class="text-white/50 text-sm">Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Polling Control -->
+    <div class="glassmorphic rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-white text-lg font-semibold">🔄 Режим работы</h2>
+            <span id="pollingStatus" class="px-3 py-1 rounded-full text-sm bg-gray-500/20 text-gray-400">
+                Остановлен
+            </span>
+        </div>
+        
+        <p class="text-white/60 text-sm mb-4">
+            Polling режим — альтернатива webhook для получения сообщений от Авито.
+            Бот будет периодически проверять новые сообщения.
+        </p>
+        
+        <div class="flex gap-3">
+            <button onclick="startPolling()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                ▶️ Запустить Polling
+            </button>
+            <button onclick="stopPolling()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                ⏹️ Остановить
+            </button>
+        </div>
+    </div>
+    
+    <!-- Masking Test -->
+    <div class="glassmorphic rounded-xl p-6">
+        <h2 class="text-white text-lg font-semibold mb-4">🔒 Тест маскирования контактов</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-white/70 text-sm">Текст с контактами</label>
+                <textarea id="maskingInput" rows="3" placeholder="Мой телефон +7 900 123-45-67, email test@mail.ru, telegram @username"
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none resize-none"></textarea>
+                <button onclick="testMasking()" class="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm">
+                    🔒 Замаскировать
+                </button>
+            </div>
+            <div>
+                <label class="text-white/70 text-sm">Результат</label>
+                <div id="maskingResult" class="mt-1 px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white/80 min-h-[80px]">
+                    Результат появится здесь...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Check status on load
+document.addEventListener('DOMContentLoaded', () => {
+    checkHealth();
+    loadKbSummary();
+    loadServices();
+});
+
+async function checkHealth() {
+    try {
+        const resp = await fetch('/webhook/avito/health');
+        const data = await resp.json();
+        
+        const badge = document.getElementById('statusBadge');
+        if (data.configured) {
+            badge.className = 'px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400';
+            badge.textContent = `🟢 Настроено (${data.chats_count} чатов)`;
+        } else {
+            badge.className = 'px-3 py-1 rounded-full text-sm bg-yellow-500/20 text-yellow-400';
+            badge.textContent = '🟡 Не настроено';
+        }
+    } catch (e) {
+        const badge = document.getElementById('statusBadge');
+        badge.className = 'px-3 py-1 rounded-full text-sm bg-red-500/20 text-red-400';
+        badge.textContent = '🔴 Ошибка';
+    }
+}
+
+async function saveConfig() {
+    const config = {
+        avito_client_id: document.getElementById('avitoClientId').value,
+        avito_client_secret: document.getElementById('avitoClientSecret').value,
+        avito_user_id: document.getElementById('avitoUserId').value,
+        megallm_api_key: document.getElementById('megallmApiKey').value
+    };
+    
+    // TODO: Implement config save endpoint
+    alert('Настройки сохранены (требуется перезапуск сервера для применения)');
+}
+
+async function testConnection() {
+    try {
+        const resp = await fetch('/webhook/avito/health');
+        const data = await resp.json();
+        
+        if (data.status === 'ok') {
+            alert('✅ Подключение работает!\nЧатов: ' + data.chats_count);
+        } else {
+            alert('⚠️ Проблема с подключением');
+        }
+    } catch (e) {
+        alert('❌ Ошибка: ' + e.message);
+    }
+}
+
+async function testMessage() {
+    const message = document.getElementById('testMessage').value.trim();
+    if (!message) {
+        alert('Введите сообщение для тестирования');
+        return;
+    }
+    
+    const btn = document.getElementById('testBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Обработка...';
+    
+    try {
+        const resp = await fetch('/admin/avito/test', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message})
+        });
+        
+        if (!resp.ok) {
+            throw new Error('Ошибка сервера');
+        }
+        
+        const data = await resp.json();
+        
+        // Show result
+        document.getElementById('testResult').classList.remove('hidden');
+        
+        // Grade with color
+        const gradeEl = document.getElementById('resultGrade');
+        gradeEl.textContent = data.score_abc;
+        gradeEl.className = 'text-2xl font-bold ' + (
+            data.score_abc === 'A' ? 'text-green-400' :
+            data.score_abc === 'B' ? 'text-yellow-400' : 'text-red-400'
+        );
+        
+        document.getElementById('resultIntent').textContent = data.intent;
+        document.getElementById('resultAction').textContent = data.next_action;
+        document.getElementById('resultReply').textContent = data.reply;
+        document.getElementById('resultDetScore').textContent = data.deterministic_score;
+        document.getElementById('resultConfidence').textContent = (data.deterministic_confidence * 100).toFixed(0) + '%';
+        
+        // Slots
+        if (data.slots && Object.keys(data.slots).length > 0) {
+            document.getElementById('resultSlots').classList.remove('hidden');
+            document.getElementById('resultSlotsContent').textContent = JSON.stringify(data.slots, null, 2);
+        } else {
+            document.getElementById('resultSlots').classList.add('hidden');
+        }
+        
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Протестировать';
+    }
+}
+
+async function loadKbSummary() {
+    try {
+        const resp = await fetch('/admin/avito/kb/summary');
+        const data = await resp.json();
+        
+        document.getElementById('kbServices').textContent = data.groups?.length || 0;
+        document.getElementById('kbFaq').textContent = data.faq_count || 0;
+        document.getElementById('kbCases').textContent = data.cases_count || 0;
+    } catch (e) {
+        console.error('Error loading KB summary:', e);
+    }
+}
+
+async function loadServices() {
+    const container = document.getElementById('servicesList');
+    
+    try {
+        const resp = await fetch('/admin/avito/services');
+        const services = await resp.json();
+        
+        if (!services.length) {
+            container.innerHTML = '<p class="text-white/50 text-sm">Нет услуг в базе знаний</p>';
+            return;
+        }
+        
+        container.innerHTML = services.map(s => `
+            <div class="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+                <div>
+                    <div class="text-white text-sm">${s.title}</div>
+                    <div class="text-white/40 text-xs">${s.group_name}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-green-400 text-sm">от ${s.price_from.toLocaleString()} ₽</div>
+                    <div class="text-white/40 text-xs">${s.price_is_fixed ? 'фикс' : 'от'}</div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (e) {
+        container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${e.message}</p>`;
+    }
+}
+
+async function startPolling() {
+    try {
+        const resp = await fetch('/webhook/avito/polling/start', {method: 'POST'});
+        const data = await resp.json();
+        
+        if (data.status === 'polling_started') {
+            document.getElementById('pollingStatus').className = 'px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400';
+            document.getElementById('pollingStatus').textContent = '🟢 Работает';
+            alert('✅ Polling запущен');
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+async function stopPolling() {
+    try {
+        const resp = await fetch('/webhook/avito/polling/stop', {method: 'POST'});
+        const data = await resp.json();
+        
+        if (data.status === 'polling_stopped') {
+            document.getElementById('pollingStatus').className = 'px-3 py-1 rounded-full text-sm bg-gray-500/20 text-gray-400';
+            document.getElementById('pollingStatus').textContent = 'Остановлен';
+            alert('⏹️ Polling остановлен');
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+async function testMasking() {
+    const text = document.getElementById('maskingInput').value.trim();
+    if (!text) {
+        alert('Введите текст для маскирования');
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/admin/avito/masking/test?text=' + encodeURIComponent(text), {
+            method: 'POST'
+        });
+        const data = await resp.json();
+        
+        document.getElementById('maskingResult').innerHTML = `
+            <div class="space-y-2">
+                <div><span class="text-white/50">Полная маскировка:</span><br>${data.masked}</div>
+                <div class="text-xs text-white/40">
+                    Телефон: ${data.phone_masked}<br>
+                    Email: ${data.email_masked}<br>
+                    Telegram: ${data.telegram_masked}
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        document.getElementById('maskingResult').textContent = 'Ошибка: ' + e.message;
+    }
+}
+</script>
+{% endblock %}

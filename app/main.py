@@ -1113,6 +1113,13 @@ async def autopost_page(request: Request):
         "request": request
     })
 
+@app.get("/avito", include_in_schema=False)
+async def avito_page(request: Request):
+    """Страница Avito Auto-responder"""
+    return templates.TemplateResponse("avito.html", {
+        "request": request
+    })
+
 @app.get("/tournaments/create")
 async def tournament_create_page(request: Request):
     """Страница создания турнира"""
