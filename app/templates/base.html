@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' 'inline-speculation-rules' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com chrome-extension://* data:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:;">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📱%3C/text%3E%3C/svg%3E">
-    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="shortcut icon" href="/static/favicon.svg">
     <title>Мониторинг - Панель управления</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind CSS (локальная сборка) -->
+    <link href="/static/css/tailwind.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <style>
@@ -445,24 +445,6 @@
             border-color: rgba(255, 255, 255, 0.3) !important;
         }
     </style>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#0b95da",
-                        "background-light": "#f5f7f8",
-                        "background-dark": "#101c22",
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
-                    },
-                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
     <!-- Bootstrap для совместимости с существующим кодом -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/style.css" rel="stylesheet">
@@ -479,17 +461,17 @@
         
         <div class="relative flex h-screen">
             <!-- Sidebar -->
-            <aside class="flex w-64 flex-col bg-black/10 backdrop-blur-sm p-4 border-r border-white/10 flex-shrink-0 z-10">
+            <aside id="sidebar" class="flex w-64 flex-col bg-black/10 backdrop-blur-sm p-4 border-r border-white/10 flex-shrink-0 z-10">
                 <div class="flex flex-col grow">
-                    <div class="flex items-center gap-2 mb-8">
-                        <div class="bg-primary rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.38 15.84 14.22 15.51 15.99C15.37 16.74 15.09 16.99 14.83 17.02C14.25 17.07 13.81 16.64 13.25 16.27C12.37 15.69 11.87 15.33 11.02 14.77C10.03 14.12 10.67 13.76 11.24 13.18C11.39 13.03 14.95 9.7 15.08 9.37C15.1 9.32 15.12 9.16 15.08 9.05C15.04 8.94 14.94 8.97 14.86 8.99C14.73 9.02 13.18 10.04 9.89 12.08C9.28 12.47 8.72 12.66 8.22 12.65C7.67 12.64 6.6 12.36 5.81 12.12C4.84 11.82 4.08 11.66 4.13 11.15C4.15 10.93 4.4 10.71 4.9 10.48C7.31 9.3 9.12 8.47 10.33 7.99C12.76 7.01 13.75 6.65 14.11 6.65C14.2 6.65 14.37 6.68 14.49 6.78C14.59 6.87 14.62 6.98 14.64 7.07C14.65 7.15 14.67 7.31 14.65 7.43C14.63 7.55 14.6 7.59 14.58 7.6C14.55 7.61 14.52 7.62 14.49 7.62Z" fill="white"/>
-                            </svg>
-                        </div>
+                    <div class="flex items-center gap-3 mb-8">
+                        <svg class="w-10 h-10 flex-shrink-0" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
+                            <defs><linearGradient id="tg-gradient" x1="50%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#2AABEE"/><stop offset="100%" stop-color="#229ED9"/></linearGradient></defs>
+                            <path fill="url(#tg-gradient)" d="M128 0C94.06 0 61.48 13.494 37.5 37.49A128.038 128.038 0 0 0 0 128c0 33.934 13.5 66.514 37.5 90.51C61.48 242.506 94.06 256 128 256s66.52-13.494 90.5-37.49c24-23.996 37.5-56.576 37.5-90.51 0-33.934-13.5-66.514-37.5-90.51C194.52 13.494 161.94 0 128 0Z"/>
+                            <path fill="#FFF" d="M57.94 126.648c37.32-16.256 62.2-26.974 74.64-32.152 35.56-14.786 42.94-17.354 47.76-17.441 1.06-.017 3.42.245 4.96 1.49 1.28 1.05 1.64 2.47 1.82 3.467.16.996.38 3.266.2 5.038-1.92 20.24-10.26 69.356-14.5 92.026-1.78 9.592-5.32 12.808-8.74 13.122-7.44.684-13.08-4.912-20.28-9.63-11.26-7.386-17.62-11.982-28.56-19.188-12.64-8.328-4.44-12.906 2.76-20.386 1.88-1.958 34.64-31.748 35.26-34.45.08-.338.16-1.598-.6-2.262-.74-.666-1.84-.438-2.64-.258-1.14.256-19.12 12.152-54 35.686-5.1 3.508-9.72 5.218-13.88 5.128-4.56-.098-13.36-2.584-19.9-4.708-8-2.606-14.38-3.984-13.82-8.41.28-2.304 3.46-4.662 9.52-7.072Z"/>
+                        </svg>
                         <div class="flex flex-col overflow-hidden">
-                            <h1 class="text-white text-xs font-semibold leading-tight">Мониторинг</h1>
-                            <p class="text-white/60 text-[10px] font-normal leading-tight">Панель управления</p>
+                            <h1 class="text-white text-sm font-semibold leading-tight">Мониторинг</h1>
+                            <p class="text-white/60 text-[11px] font-normal leading-tight">Панель управления</p>
                         </div>
                     </div>
                     <nav class="flex flex-col gap-2">
@@ -521,6 +503,14 @@
                         <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/group-data" onclick="return showTab('group-data-tab', event);">
                             <span class="material-symbols-outlined">group</span>
                             <p class="text-sm font-medium leading-normal">Сбор данных</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/leads">
+                            <span class="material-symbols-outlined">assignment</span>
+                            <p class="text-sm font-medium leading-normal">Заявки</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/autopost">
+                            <span class="material-symbols-outlined">send</span>
+                            <p class="text-sm font-medium leading-normal">Автопостинг</p>
                         </a>
                         <a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" href="/admin">
                             <span class="material-symbols-outlined">admin_panel_settings</span>
@@ -1172,15 +1162,16 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/lib/marked.umd.js" 
             onload="console.log('✅ Marked.js загружен'); window._markedLoaded = true;" 
             onerror="console.error('❌ Ошибка загрузки Marked.js с jsdelivr, пробуем unpkg...'); if(typeof window.loadMarkedFromUnpkg === 'function') window.loadMarkedFromUnpkg();"></script>
-    <!-- DOMPurify for sanitizing HTML -->
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/purify.min.js" 
-            onload="console.log('✅ DOMPurify загружен'); window._dompurifyLoaded = true;" 
-            onerror="console.error('❌ Ошибка загрузки DOMPurify с jsdelivr, пробуем unpkg...'); if(typeof window.loadDOMPurifyFromUnpkg === 'function') window.loadDOMPurifyFromUnpkg();"></script>
+    <!-- DOMPurify for sanitizing HTML (локальная копия для избежания CORB) -->
+    <script src="/static/js/purify.min.js"
+            onload="console.log('✅ DOMPurify загружен (локально)'); window._dompurifyLoaded = true;"
+            onerror="console.error('❌ Ошибка загрузки локального DOMPurify, пробуем CDN...'); if(typeof window.loadDOMPurifyFromUnpkg === 'function') window.loadDOMPurifyFromUnpkg();"></script>
     <script src="/static/js/app.js?v={{ range(1, 10000) | random }}"></script>
     <script src="/static/js/contact_enrichment.js?v={{ range(1, 10000) | random }}"></script>
     <script src="/static/js/whatsapp_sync.js?v={{ range(1, 10000) | random }}"></script>
     <script src="/static/js/tournaments.js?v={{ range(1, 10000) | random }}"></script>
     <script src="/static/js/dashboard.js?v={{ range(1, 10000) | random }}"></script>
+
 </body>
 
 </html>

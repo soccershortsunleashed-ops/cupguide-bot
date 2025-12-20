@@ -1,0 +1,870 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-white text-2xl font-bold">Автопостинг</h1>
+            <p class="text-white/60 text-sm">Публикация объявлений в Telegram группы</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="connectionBadge" class="px-3 py-1 rounded-full text-sm bg-red-500/20 text-red-400">
+                ⚫ Не подключено
+            </span>
+        </div>
+    </div>
+
+    <!-- Auth Section (показывается если не авторизован) -->
+    <div id="authSection" class="glassmorphic rounded-xl p-6 hidden">
+        <h2 class="text-white text-lg font-semibold mb-4">🔐 Авторизация в Telegram</h2>
+        <p class="text-white/70 text-sm mb-4">
+            Для постинга от вашего имени нужна авторизация через телефон.
+            Это делается один раз, сессия сохраняется.
+        </p>
+        
+        <div id="phoneStep" class="space-y-4">
+            <div>
+                <label class="text-white/70 text-sm">Номер телефона</label>
+                <input type="tel" id="phoneInput" placeholder="+79001234567" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+            <button onclick="sendAuthCode()" class="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors">
+                Отправить код
+            </button>
+        </div>
+        
+        <div id="codeStep" class="space-y-4 hidden">
+            <div>
+                <label class="text-white/70 text-sm">Код из Telegram</label>
+                <input type="text" id="codeInput" placeholder="12345" 
+                    class="w-full mt-1 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-primary focus:outline-none">
+            </div>
+            <button onclick="verifyAuthCode()" class="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors">
+                Подтвердить
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content (показывается если авторизован) -->
+    <div id="mainContent" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Column: Groups -->
+        <div class="glassmorphic rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-white text-lg font-semibold">📋 Группы для постинга</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="showGroupsMenu()" id="loadGroupsBtn" class="px-3 py-1 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors">
+                        🔄 Загрузить группы ▼
+                    </button>
+                    <button onclick="deleteBannedGroups()" class="px-3 py-1 text-sm bg-orange-600/50 hover:bg-orange-600 text-white rounded-lg transition-colors">
+                        🚷 Удалить забаненные
+                    </button>
+                    <button onclick="clearGroups()" class="px-3 py-1 text-sm bg-red-600/50 hover:bg-red-600 text-white rounded-lg transition-colors">
+                        🗑️ Очистить
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Groups Menu Dropdown -->
+            <div id="groupsMenu" class="hidden mb-4 p-3 bg-black/40 rounded-lg border border-white/10">
+                <p class="text-white/70 text-sm mb-3">Выберите источник групп:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="loadFolders()" class="px-3 py-2 text-sm bg-blue-600/50 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                        📁 Папки Telegram
+                    </button>
+                    <button onclick="loadGroupsWithoutFolders()" class="px-3 py-2 text-sm bg-purple-600/50 hover:bg-purple-600 text-white rounded-lg transition-colors">
+                        👥 Группы без папок
+                    </button>
+                    <button onclick="loadAllMyGroups()" class="px-3 py-2 text-sm bg-green-600/50 hover:bg-green-600 text-white rounded-lg transition-colors">
+                        📋 Все группы
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Folders View -->
+            <div id="foldersView" class="hidden mb-4 space-y-3"></div>
+            
+            <!-- Groups List -->
+            <div id="groupsList" class="space-y-2 max-h-96 overflow-y-auto">
+                <p class="text-white/50 text-sm">Загрузка...</p>
+            </div>
+            
+            <!-- Add Group Form -->
+            <div class="mt-4 pt-4 border-t border-white/10">
+                <h3 class="text-white/70 text-sm mb-2">Добавить группу вручную</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="newGroupId" placeholder="@username, ID или ссылка t.me/..." 
+                        class="flex-1 px-3 py-2 bg-black/20 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:border-primary focus:outline-none">
+                    <button onclick="addGroup()" id="addGroupBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors">
+                        + Добавить
+                    </button>
+                </div>
+                <p class="text-white/40 text-xs mt-1">Название подтянется автоматически</p>
+            </div>
+        </div>
+        
+        <!-- Right Column: Posting -->
+        <div class="space-y-6">
+            <!-- Message Preview/Editor -->
+            <div class="glassmorphic rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-white text-lg font-semibold">📝 Текст объявления</h2>
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+                            <input type="checkbox" id="useShortMessage" onchange="loadMessagePreview()" class="rounded">
+                            Короткая версия
+                        </label>
+                        <button onclick="toggleEditMode()" id="editModeBtn" class="px-3 py-1 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors">
+                            ✏️ Редактировать
+                        </button>
+                    </div>
+                </div>
+                <!-- Preview mode -->
+                <div id="messagePreviewContainer">
+                    <div id="messagePreview" class="bg-black/30 rounded-lg p-4 text-white/80 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
+                        Загрузка...
+                    </div>
+                    <div class="mt-2">
+                        <span id="charCountPreview" class="text-white/50 text-xs">0 / 1024 символов</span>
+                    </div>
+                </div>
+                <!-- Edit mode -->
+                <div id="messageEditContainer" class="hidden">
+                    <textarea id="messageEditor" 
+                        class="w-full h-64 bg-black/30 border border-white/20 rounded-lg p-4 text-white text-sm resize-none focus:border-primary focus:outline-none"
+                        placeholder="Текст объявления..."></textarea>
+                    <div class="flex justify-between items-center mt-3">
+                        <span id="charCount" class="text-white/50 text-xs">0 символов</span>
+                        <div class="flex gap-2">
+                            <button onclick="resetMessage()" class="px-3 py-1 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors">
+                                🔄 Сбросить
+                            </button>
+                            <button onclick="saveMessage()" class="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                💾 Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Post Controls -->
+            <div class="glassmorphic rounded-xl p-6">
+                <h2 class="text-white text-lg font-semibold mb-4">🚀 Запуск постинга</h2>
+                
+                <div class="space-y-4">
+                    <label class="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+                        <input type="checkbox" id="skipPostedToday" checked class="rounded">
+                        Пропускать группы где уже постили сегодня
+                    </label>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="startPosting()" id="postButton" 
+                            class="flex-1 px-4 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            ▶️ Запустить постинг
+                        </button>
+                    </div>
+                    
+                    <div id="postingStatus" class="hidden">
+                        <div class="flex items-center gap-2 text-yellow-400">
+                            <span class="animate-spin">⏳</span>
+                            <span>Постинг в процессе...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logs Section -->
+    <div class="glassmorphic rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-white text-lg font-semibold">📊 Лог постинга</h2>
+            <button onclick="loadLogs()" class="px-3 py-1 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors">
+                🔄 Обновить
+            </button>
+        </div>
+        <div id="logsContainer" class="space-y-2 max-h-64 overflow-y-auto">
+            <p class="text-white/50 text-sm">Нет записей</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentGroups = [];
+const MAX_CAPTION_LENGTH = 1024;
+
+// Escape HTML для безопасного отображения
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', () => {
+    checkStatus();
+    loadAutopostGroups();
+    loadMessagePreview();
+    loadLogs();
+});
+
+async function checkStatus() {
+    try {
+        const resp = await fetch('/api/autopost/status');
+        const data = await resp.json();
+        
+        const badge = document.getElementById('connectionBadge');
+        const authSection = document.getElementById('authSection');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (data.connected) {
+            badge.className = 'px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400';
+            badge.textContent = `🟢 ${data.username || 'Подключено'}`;
+            authSection.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+        } else if (data.auth_required) {
+            badge.className = 'px-3 py-1 rounded-full text-sm bg-yellow-500/20 text-yellow-400';
+            badge.textContent = '🟡 Требуется авторизация';
+            authSection.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+        } else {
+            badge.className = 'px-3 py-1 rounded-full text-sm bg-red-500/20 text-red-400';
+            badge.textContent = '⚫ Не подключено';
+            authSection.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+        }
+    } catch (e) {
+        console.error('Error checking status:', e);
+    }
+}
+
+async function sendAuthCode() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    if (!phone) {
+        alert('Введите номер телефона');
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/api/autopost/auth/send-code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone})
+        });
+        
+        if (resp.ok) {
+            document.getElementById('phoneStep').classList.add('hidden');
+            document.getElementById('codeStep').classList.remove('hidden');
+            alert('Код отправлен в Telegram');
+        } else {
+            const data = await resp.json();
+            alert('Ошибка: ' + (data.detail || 'Неизвестная ошибка'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+async function verifyAuthCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    if (!code) {
+        alert('Введите код');
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/api/autopost/auth/verify-code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code})
+        });
+        
+        if (resp.ok) {
+            alert('Авторизация успешна!');
+            checkStatus();
+        } else {
+            const data = await resp.json();
+            alert('Ошибка: ' + (data.detail || 'Неверный код'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+function loadAutopostGroups() {
+    console.log('loadAutopostGroups called');
+    fetch('/api/autopost/groups')
+        .then(resp => resp.json())
+        .then(data => {
+            console.log('loadAutopostGroups data:', data);
+            currentGroups = data.groups || [];
+            renderGroups();
+        })
+        .catch(e => {
+            console.error('loadAutopostGroups error:', e);
+        });
+}
+
+let groupsMenuVisible = false;
+
+function showGroupsMenu() {
+    const menu = document.getElementById('groupsMenu');
+    groupsMenuVisible = !groupsMenuVisible;
+    menu.classList.toggle('hidden', !groupsMenuVisible);
+}
+
+function hideGroupsMenu() {
+    document.getElementById('groupsMenu').classList.add('hidden');
+    groupsMenuVisible = false;
+}
+
+async function clearGroups() {
+    if (!confirm('Очистить весь список групп?')) return;
+    
+    try {
+        const resp = await fetch('/api/autopost/groups', {method: 'DELETE'});
+        if (resp.ok) {
+            currentGroups = [];
+            renderGroups();
+            alert('✅ Список групп очищен');
+        } else {
+            const data = await resp.json();
+            alert('Ошибка: ' + (data.detail || 'Не удалось очистить'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+async function deleteBannedGroups() {
+    if (!confirm('Удалить все группы, в которых вы забанены?')) return;
+    
+    try {
+        const resp = await fetch('/api/autopost/groups/banned', {method: 'DELETE'});
+        const data = await resp.json();
+        
+        if (resp.ok) {
+            if (data.deleted_count > 0) {
+                alert(`✅ Удалено ${data.deleted_count} забаненных групп:\n${data.deleted_groups.join('\n')}`);
+                loadAutopostGroups();
+            } else {
+                alert('Забаненных групп не найдено');
+            }
+        } else {
+            alert('Ошибка: ' + (data.detail || 'Не удалось удалить'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+async function loadFolders() {
+    hideGroupsMenu();
+    const container = document.getElementById('groupsList');
+    const foldersView = document.getElementById('foldersView');
+    
+    container.innerHTML = '<p class="text-white/50 text-sm">Загрузка папок...</p>';
+    foldersView.classList.add('hidden');
+    
+    try {
+        const resp = await fetch('/api/autopost/my-groups?folders_only=true');
+        const data = await resp.json();
+        
+        if (data.auth_required) {
+            checkStatus();
+            return;
+        }
+        
+        if (data.error) {
+            container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${data.error}</p>`;
+            return;
+        }
+        
+        const folders = data.folders || [];
+        
+        if (!folders.length) {
+            container.innerHTML = '<p class="text-white/50 text-sm">Нет папок с группами</p>';
+            return;
+        }
+        
+        // Показываем папки
+        container.innerHTML = '';
+        foldersView.classList.remove('hidden');
+        
+        console.log('Folders data:', folders);
+        
+        foldersView.innerHTML = folders.map(f => {
+            const folderTitle = f.title || 'Без названия';
+            const folderCount = f.count || 0;
+            const folderGroups = f.groups || [];
+            
+            return `
+            <div class="bg-black/30 rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">📁</span>
+                        <span class="text-white font-medium">${escapeHtml(folderTitle)}</span>
+                        <span class="text-white/40 text-xs">(${folderCount} групп)</span>
+                    </div>
+                    <button onclick='addFolderGroups(${JSON.stringify(folderGroups)})' 
+                        class="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                        + Добавить все
+                    </button>
+                </div>
+                <div class="space-y-1 max-h-32 overflow-y-auto">
+                    ${folderGroups.map(g => `
+                        <div class="flex items-center justify-between p-1 text-sm">
+                            <span class="text-white/70">${g.is_channel ? '📢' : '👥'} ${escapeHtml(g.name || 'Без названия')}</span>
+                            <button onclick="addGroupFromList('${g.id}', '${escapeHtml(g.name || '')}')" 
+                                class="text-green-400 hover:text-green-300 text-xs">+ добавить</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `}).join('');
+        
+    } catch (e) {
+        container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${e.message}</p>`;
+    }
+}
+
+function addFolderGroups(groups) {
+    let added = 0;
+    for (const g of groups) {
+        if (!currentGroups.find(cg => cg.id == g.id)) {
+            currentGroups.push({id: String(g.id), name: g.name, active: true});
+            added++;
+        }
+    }
+    saveGroups();
+    renderGroups();
+    document.getElementById('foldersView').classList.add('hidden');
+    alert(`✅ Добавлено ${added} групп`);
+}
+
+async function loadGroupsWithoutFolders() {
+    hideGroupsMenu();
+    const container = document.getElementById('groupsList');
+    document.getElementById('foldersView').classList.add('hidden');
+    
+    container.innerHTML = '<p class="text-white/50 text-sm">Загрузка групп без папок...</p>';
+    
+    try {
+        const resp = await fetch('/api/autopost/my-groups?no_folders=true');
+        const data = await resp.json();
+        
+        if (data.auth_required) {
+            checkStatus();
+            return;
+        }
+        
+        if (data.error) {
+            container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${data.error}</p>`;
+            return;
+        }
+        
+        const groups = data.groups || [];
+        renderGroupsSelection(groups, 'Группы без папок');
+        
+    } catch (e) {
+        container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${e.message}</p>`;
+    }
+}
+
+async function loadAllMyGroups() {
+    hideGroupsMenu();
+    const container = document.getElementById('groupsList');
+    document.getElementById('foldersView').classList.add('hidden');
+    
+    container.innerHTML = '<p class="text-white/50 text-sm">Загрузка всех групп...</p>';
+    
+    try {
+        const resp = await fetch('/api/autopost/my-groups');
+        const data = await resp.json();
+        
+        if (data.auth_required) {
+            checkStatus();
+            return;
+        }
+        
+        if (data.error) {
+            container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${data.error}</p>`;
+            return;
+        }
+        
+        const groups = data.groups || [];
+        renderGroupsSelection(groups, 'Все группы');
+        
+    } catch (e) {
+        container.innerHTML = `<p class="text-red-400 text-sm">Ошибка: ${e.message}</p>`;
+    }
+}
+
+function renderGroupsSelection(groups, title) {
+    const container = document.getElementById('groupsList');
+    
+    if (!groups.length) {
+        container.innerHTML = '<p class="text-white/50 text-sm">Нет групп</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
+            <span class="text-white/70 text-sm">${title} (${groups.length})</span>
+            <button onclick="addAllGroups(${JSON.stringify(groups).replace(/"/g, '&quot;')})" 
+                class="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors">
+                + Добавить все
+            </button>
+        </div>
+        ${groups.map(g => `
+            <div class="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+                <div class="flex items-center gap-2">
+                    <span class="text-white/60">${g.is_channel ? '📢' : '👥'}</span>
+                    <span class="text-white text-sm">${g.name}</span>
+                    <span class="text-white/40 text-xs">${g.username ? '@' + g.username : g.id}</span>
+                </div>
+                <button onclick="addGroupFromList('${g.id}', '${g.name.replace(/'/g, "\\'")}')" 
+                    class="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors">
+                    + Добавить
+                </button>
+            </div>
+        `).join('')}
+    `;
+}
+
+function addAllGroups(groups) {
+    let added = 0;
+    for (const g of groups) {
+        if (!currentGroups.find(cg => cg.id == g.id)) {
+            currentGroups.push({id: String(g.id), name: g.name, active: true});
+            added++;
+        }
+    }
+    saveGroups();
+    renderGroups();
+    alert(`✅ Добавлено ${added} групп`);
+}
+
+// Legacy function for compatibility
+async function loadMyGroups() {
+    loadAllMyGroups();
+}
+
+function renderGroups() {
+    const container = document.getElementById('groupsList');
+    
+    if (!currentGroups.length) {
+        container.innerHTML = '<p class="text-white/50 text-sm">Нет групп. Добавьте группы для постинга.</p>';
+        return;
+    }
+    
+    container.innerHTML = currentGroups.map((g, i) => `
+        <div class="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" ${g.active ? 'checked' : ''} onchange="toggleGroup(${i})" class="rounded">
+                <span class="text-white text-sm">${g.name}</span>
+                <span class="text-white/40 text-xs">${g.id}</span>
+            </div>
+            <button onclick="removeGroup(${i})" class="text-red-400 hover:text-red-300 text-sm">✕</button>
+        </div>
+    `).join('');
+}
+
+function addGroupFromList(id, name) {
+    if (currentGroups.find(g => g.id == id)) {
+        alert('Группа уже добавлена');
+        return;
+    }
+    currentGroups.push({id: String(id), name, active: true});
+    saveGroups();
+    renderGroups();
+}
+
+async function addGroup() {
+    const idInput = document.getElementById('newGroupId');
+    const btn = document.getElementById('addGroupBtn');
+    const id = idInput.value.trim();
+    
+    if (!id) {
+        alert('Введите ID, @username или ссылку на группу');
+        return;
+    }
+    
+    // Проверяем дубликат
+    if (currentGroups.find(g => g.id === id || g.id === '@' + id.replace('@', ''))) {
+        alert('Группа уже добавлена');
+        return;
+    }
+    
+    // Показываем загрузку
+    btn.disabled = true;
+    btn.textContent = '⏳...';
+    
+    try {
+        // Получаем информацию о группе
+        const resp = await fetch(`/api/autopost/group-info?group_id=${encodeURIComponent(id)}`);
+        const data = await resp.json();
+        
+        if (data.auth_required) {
+            checkStatus();
+            alert('Требуется авторизация');
+            return;
+        }
+        
+        const name = data.name || id;
+        const normalizedId = data.username ? '@' + data.username : (data.id ? String(data.id) : id);
+        
+        currentGroups.push({id: normalizedId, name, active: true});
+        saveGroups();
+        renderGroups();
+        
+        idInput.value = '';
+        
+        if (data.error) {
+            alert(`Группа добавлена, но: ${data.error}`);
+        }
+    } catch (e) {
+        // Добавляем как есть если ошибка
+        currentGroups.push({id, name: id, active: true});
+        saveGroups();
+        renderGroups();
+        idInput.value = '';
+        alert('Группа добавлена (название не удалось получить)');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '+ Добавить';
+    }
+}
+
+function toggleGroup(index) {
+    currentGroups[index].active = !currentGroups[index].active;
+    saveGroups();
+}
+
+function removeGroup(index) {
+    currentGroups.splice(index, 1);
+    saveGroups();
+    renderGroups();
+}
+
+async function saveGroups() {
+    try {
+        await fetch('/api/autopost/groups', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(currentGroups)
+        });
+    } catch (e) {
+        console.error('Error saving groups:', e);
+    }
+}
+
+let isEditMode = false;
+let originalMessage = '';
+
+async function loadMessagePreview() {
+    const useShort = document.getElementById('useShortMessage').checked;
+    
+    try {
+        const resp = await fetch(`/api/autopost/message-preview?short=${useShort}`);
+        const data = await resp.json();
+        document.getElementById('messagePreview').textContent = data.message;
+        originalMessage = data.message;
+        
+        // Обновляем счётчик в превью
+        updatePreviewCharCount(data.message);
+        
+        // Если в режиме редактирования, обновляем и редактор
+        if (isEditMode) {
+            document.getElementById('messageEditor').value = data.message;
+            updateCharCount();
+        }
+    } catch (e) {
+        document.getElementById('messagePreview').textContent = 'Ошибка загрузки';
+    }
+}
+
+function updatePreviewCharCount(text) {
+    const charCountEl = document.getElementById('charCountPreview');
+    if (!charCountEl) return;
+    
+    const len = text.length;
+    
+    if (len > MAX_CAPTION_LENGTH) {
+        charCountEl.textContent = `⚠️ ${len} / ${MAX_CAPTION_LENGTH} символов (превышен лимит!)`;
+        charCountEl.className = 'text-red-400 text-xs font-medium';
+    } else if (len > MAX_CAPTION_LENGTH - 100) {
+        charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+        charCountEl.className = 'text-yellow-400 text-xs';
+    } else {
+        charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+        charCountEl.className = 'text-white/50 text-xs';
+    }
+}
+
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const previewContainer = document.getElementById('messagePreviewContainer');
+    const editContainer = document.getElementById('messageEditContainer');
+    const btn = document.getElementById('editModeBtn');
+    const editor = document.getElementById('messageEditor');
+    const charCountEl = document.getElementById('charCount');
+    const previewText = document.getElementById('messagePreview').textContent;
+    
+    if (isEditMode) {
+        previewContainer.classList.add('hidden');
+        editContainer.classList.remove('hidden');
+        editor.value = previewText;
+        btn.textContent = '👁️ Превью';
+        
+        // Обновляем счётчик напрямую
+        const len = previewText.length;
+        if (charCountEl) {
+            if (len > MAX_CAPTION_LENGTH) {
+                charCountEl.textContent = `⚠️ ${len} / ${MAX_CAPTION_LENGTH} символов (превышен лимит!)`;
+                charCountEl.className = 'text-red-400 text-xs font-medium';
+            } else if (len > MAX_CAPTION_LENGTH - 100) {
+                charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+                charCountEl.className = 'text-yellow-400 text-xs';
+            } else {
+                charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+                charCountEl.className = 'text-white/50 text-xs';
+            }
+        }
+    } else {
+        previewContainer.classList.remove('hidden');
+        editContainer.classList.add('hidden');
+        btn.textContent = '✏️ Редактировать';
+    }
+}
+
+function updateCharCount() {
+    try {
+        const editor = document.getElementById('messageEditor');
+        const charCountEl = document.getElementById('charCount');
+        
+        if (!editor || !charCountEl) {
+            console.warn('updateCharCount: elements not found', {editor: !!editor, charCountEl: !!charCountEl});
+            return;
+        }
+        
+        const len = (editor.value || '').length;
+        
+        if (len > MAX_CAPTION_LENGTH) {
+            charCountEl.textContent = `⚠️ ${len} / ${MAX_CAPTION_LENGTH} символов (превышен лимит!)`;
+            charCountEl.className = 'text-red-400 text-xs font-medium';
+        } else if (len > MAX_CAPTION_LENGTH - 100) {
+            charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+            charCountEl.className = 'text-yellow-400 text-xs';
+        } else {
+            charCountEl.textContent = `${len} / ${MAX_CAPTION_LENGTH} символов`;
+            charCountEl.className = 'text-white/50 text-xs';
+        }
+    } catch (err) {
+        console.error('updateCharCount error:', err);
+    }
+}
+
+function resetMessage() {
+    document.getElementById('messageEditor').value = originalMessage;
+    updateCharCount();
+}
+
+async function saveMessage() {
+    const useShort = document.getElementById('useShortMessage').checked;
+    const message = document.getElementById('messageEditor').value;
+    
+    try {
+        const resp = await fetch(`/api/autopost/message?short=${useShort}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message})
+        });
+        
+        if (resp.ok) {
+            alert('✅ Сообщение сохранено!');
+            document.getElementById('messagePreview').textContent = message;
+            originalMessage = message;
+            // Обновляем счётчик в превью
+            updatePreviewCharCount(message);
+        } else {
+            const data = await resp.json();
+            alert('Ошибка: ' + (data.detail || 'Не удалось сохранить'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    }
+}
+
+// Обновляем счётчик при вводе (используем делегирование для надёжности)
+document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'messageEditor') {
+        updateCharCount();
+    }
+});
+
+async function startPosting() {
+    const btn = document.getElementById('postButton');
+    const status = document.getElementById('postingStatus');
+    
+    btn.disabled = true;
+    status.classList.remove('hidden');
+    
+    try {
+        const resp = await fetch('/api/autopost/post', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                use_short: document.getElementById('useShortMessage').checked,
+                skip_posted_today: document.getElementById('skipPostedToday').checked
+            })
+        });
+        
+        const data = await resp.json();
+        
+        if (resp.ok) {
+            alert(`Постинг завершён!\n✅ Успешно: ${data.stats.success}\n❌ Ошибок: ${data.stats.failed}\n⏭️ Пропущено: ${data.stats.skipped}`);
+            loadLogs();
+        } else {
+            alert('Ошибка: ' + (data.detail || 'Неизвестная ошибка'));
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        status.classList.add('hidden');
+    }
+}
+
+async function loadLogs() {
+    try {
+        const resp = await fetch('/api/autopost/logs');
+        const data = await resp.json();
+        
+        const container = document.getElementById('logsContainer');
+        const logs = (data.logs || []).reverse();
+        
+        if (!logs.length) {
+            container.innerHTML = '<p class="text-white/50 text-sm">Нет записей</p>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => `
+            <div class="flex items-center justify-between p-2 bg-black/20 rounded text-sm">
+                <div class="flex items-center gap-2">
+                    <span>${log.success ? '✅' : '❌'}</span>
+                    <span class="text-white">${log.group_name}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    ${log.error ? `<span class="text-red-400 text-xs">${log.error}</span>` : ''}
+                    <span class="text-white/40 text-xs">${new Date(log.timestamp).toLocaleString()}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Error loading logs:', e);
+    }
+}
+</script>
+{% endblock %}

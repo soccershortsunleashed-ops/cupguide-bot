@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
-from app.api import auth, channels, messages, contacts, green_api, groups, webhooks, tournaments, dashboard, admin, tournament_extract, extract, logs, teletype, whatsapp, premium
+from app.api import auth, channels, messages, contacts, green_api, groups, webhooks, tournaments, dashboard, admin, tournament_extract, extract, logs, teletype, whatsapp, premium, leads, autopost
 from app.services.monitoring_service import monitoring_service
 
 logger = logging.getLogger(__name__)
@@ -98,6 +98,28 @@ app.include_router(contacts.router, prefix="/contacts", tags=["Contacts"])
 app.include_router(green_api.router, prefix="/green-api", tags=["Green API"])
 app.include_router(groups.router, prefix="/groups", tags=["Groups"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
+
+# Leads router (freelance funnel)
+try:
+    print("🔧 [DEBUG] Adding leads router...")
+    app.include_router(leads.router, tags=["Leads"])
+    print("✅ [DEBUG] Leads router added successfully")
+except Exception as e:
+    print(f"❌ [DEBUG] Error adding leads router: {e}")
+    import traceback
+    print(f"   [DEBUG] Traceback: {traceback.format_exc()}")
+
+# Avito Bot router (LLM auto-responder)
+try:
+    print("🔧 [DEBUG] Adding Avito Bot routers...")
+    from avito_bot.api import webhook_router, admin_router
+    app.include_router(webhook_router, tags=["Avito Webhook"])
+    app.include_router(admin_router, tags=["Avito Admin"])
+    print("✅ [DEBUG] Avito Bot routers added successfully")
+except Exception as e:
+    print(f"❌ [DEBUG] Error adding Avito Bot routers: {e}")
+    import traceback
+    print(f"   [DEBUG] Traceback: {traceback.format_exc()}")
 # Tournament routes
 try:
     print("🔧 [DEBUG] Attempting to include tournament router...")
@@ -222,6 +244,14 @@ except Exception as e:
     print(f"❌ [DEBUG] Error adding logs router: {e}")
     import traceback
     print(f"   [DEBUG] Traceback: {traceback.format_exc()}")
+
+# Autopost router
+try:
+    print("🔧 [DEBUG] Adding autopost router...")
+    app.include_router(autopost.router, tags=["Autopost"])
+    print("✅ [DEBUG] Autopost router added successfully")
+except Exception as e:
+    print(f"❌ [DEBUG] Error adding autopost router: {e}")
 
 # Добавляем простой endpoint для извлечения данных
 @app.post("/admin/extract-tournament-data")
@@ -1067,6 +1097,20 @@ async def admin_page(request: Request):
     return templates.TemplateResponse("admin_panel.html", {
         "request": request,
         "timestamp": int(datetime.now().timestamp())
+    })
+
+@app.get("/leads", include_in_schema=False)
+async def leads_page(request: Request):
+    """Страница заявок из фриланс-воронки"""
+    return templates.TemplateResponse("leads.html", {
+        "request": request
+    })
+
+@app.get("/autopost", include_in_schema=False)
+async def autopost_page(request: Request):
+    """Страница автопостинга"""
+    return templates.TemplateResponse("autopost.html", {
+        "request": request
     })
 
 @app.get("/tournaments/create")

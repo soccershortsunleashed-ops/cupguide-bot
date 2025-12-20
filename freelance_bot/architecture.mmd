@@ -1,0 +1,72 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1e3a5f', 'primaryTextColor': '#fff', 'primaryBorderColor': '#3b82f6', 'lineColor': '#60a5fa', 'secondaryColor': '#1e293b', 'tertiaryColor': '#0f172a'}}}%%
+flowchart TB
+    subgraph TELEGRAM["📱 TELEGRAM"]
+        Groups["👥 Группы<br/>(триггер БОТ)"]
+        DM["💬 Личные сообщения<br/>(/start)"]
+        Owner["👤 Владелец<br/>(уведомления)"]
+    end
+
+    subgraph BOT["🤖 AIOGRAM 3.x (FSM)"]
+        subgraph HANDLERS["Handlers"]
+            Entry["entry.py<br/>/start, БОТ"]
+            Screening["screening.py<br/>Q1/Q2/Q3"]
+            Routing["routing.py<br/>A/B/TRASH"]
+        end
+        
+        subgraph STATES["FSM States"]
+            Flow["ENTRY → Q1 → Q2 → Q3 → NICHE<br/>→ SCORING → A/B/TRASH → APP"]
+        end
+        
+        subgraph SERVICES["Services"]
+            LLM["llm_scoring.py<br/>MegaLLM API"]
+            Det["deterministic_scoring.py<br/>(fallback)"]
+            Notif["notification_service.py"]
+        end
+    end
+
+    subgraph BACKEND["⚡ BACKEND (FastAPI)"]
+        API["/api/leads<br/>POST, GET, PUT"]
+        Storage["JSON Storage<br/>leads.json"]
+    end
+
+    subgraph AUTOPOST["📢 AUTOPOST (Telethon)"]
+        Poster["poster.py<br/>Telethon userbot"]
+        GroupsList["groups.py<br/>26 групп"]
+        Message["message.py<br/>текст объявления"]
+        Config["config.py<br/>40с, 35/час"]
+    end
+
+    subgraph EXTERNAL["🌐 EXTERNAL APIs"]
+        MegaLLM["MegaLLM API<br/>gpt-4o-mini<br/>Скоринг A/B/TRASH"]
+    end
+
+    Groups --> Entry
+    DM --> Entry
+    Entry --> Screening
+    Screening --> Routing
+    Routing --> Notif
+    Notif --> Owner
+    
+    Screening --> Flow
+    Flow --> LLM
+    Flow --> Det
+    LLM --> MegaLLM
+    
+    Routing --> API
+    API --> Storage
+    
+    Poster --> GroupsList
+    Poster --> Message
+    Poster --> Config
+
+    classDef telegram fill:#0088cc,stroke:#fff,color:#fff
+    classDef bot fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    classDef backend fill:#059669,stroke:#fff,color:#fff
+    classDef autopost fill:#7c3aed,stroke:#fff,color:#fff
+    classDef external fill:#dc2626,stroke:#fff,color:#fff
+    
+    class Groups,DM,Owner telegram
+    class Entry,Screening,Routing,Flow,LLM,Det,Notif bot
+    class API,Storage backend
+    class Poster,GroupsList,Message,Config autopost
+    class MegaLLM external

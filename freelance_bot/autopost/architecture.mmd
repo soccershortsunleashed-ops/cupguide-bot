@@ -1,0 +1,106 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#7c3aed', 'primaryTextColor': '#fff', 'primaryBorderColor': '#a78bfa', 'lineColor': '#c4b5fd', 'secondaryColor': '#1e293b', 'tertiaryColor': '#0f172a'}}}%%
+flowchart TB
+    subgraph WEB["🌐 WEB INTERFACE /autopost"]
+        UI["autopost.html<br/>TailwindCSS + Alpine.js"]
+        Editor["📝 Редактор текста<br/>Markdown preview<br/>Счётчик символов (1024)"]
+        GroupsUI["📋 Список групп<br/>Чекбоксы выбора"]
+        Controls["🎮 Управление<br/>Старт / Стоп / Статус"]
+    end
+
+    subgraph API["⚡ FastAPI Backend"]
+        AutopostAPI["app/api/autopost.py"]
+        
+        subgraph ENDPOINTS["Endpoints"]
+            Status["GET /status<br/>Статус Telethon"]
+            Connect["POST /connect<br/>Авторизация"]
+            Groups["GET/POST /groups<br/>Список групп"]
+            Post["POST /post<br/>Запуск постинга"]
+            Stop["POST /stop<br/>Остановка"]
+            Logs["GET /logs<br/>История постов"]
+            Folders["GET /folders<br/>Папки Telegram"]
+        end
+    end
+
+    subgraph AUTOPOST["📢 AUTOPOST MODULE"]
+        direction TB
+        
+        subgraph CORE["Core"]
+            Poster["poster.py<br/>AutoPoster class"]
+            Client["TelegramClient<br/>(Telethon)"]
+        end
+        
+        subgraph CONFIG["Configuration"]
+            ConfigFile["config.py"]
+            Delay["⏱️ POST_DELAY: 40 сек"]
+            Limit["📊 MAX_POSTS: 35/час"]
+            Quiet["🌙 QUIET_HOURS: 2-6"]
+        end
+        
+        subgraph DATA["Data"]
+            GroupsFile["groups.py<br/>26 активных групп"]
+            MessageFile["message.py<br/>Текст объявления"]
+            LogFile["posts_log.json<br/>История постов"]
+        end
+    end
+
+    subgraph TELEGRAM["📱 TELEGRAM"]
+        Session["freelance_poster.session<br/>Сессия личного аккаунта"]
+        
+        subgraph GROUPS["Целевые группы"]
+            G1["Группа 1"]
+            G2["Группа 2"]
+            G3["..."]
+            GN["Группа N"]
+        end
+    end
+
+    subgraph FLOW["🔄 POSTING FLOW"]
+        direction LR
+        F1["1️⃣ Проверка<br/>тихих часов"]
+        F2["2️⃣ Загрузка<br/>групп"]
+        F3["3️⃣ Проверка<br/>постили сегодня?"]
+        F4["4️⃣ Отправка<br/>link_preview=True"]
+        F5["5️⃣ Задержка<br/>40 сек"]
+        F6["6️⃣ Логирование<br/>результата"]
+    end
+
+    %% Connections
+    UI --> Editor
+    UI --> GroupsUI
+    UI --> Controls
+    
+    Controls --> AutopostAPI
+    AutopostAPI --> Status
+    AutopostAPI --> Connect
+    AutopostAPI --> Groups
+    AutopostAPI --> Post
+    AutopostAPI --> Stop
+    AutopostAPI --> Logs
+    AutopostAPI --> Folders
+    
+    Post --> Poster
+    Poster --> Client
+    Poster --> ConfigFile
+    Poster --> GroupsFile
+    Poster --> MessageFile
+    
+    Client --> Session
+    Session --> GROUPS
+    
+    Poster --> LogFile
+    
+    F1 --> F2 --> F3 --> F4 --> F5 --> F6
+    F6 -.-> F3
+
+    %% Styles
+    classDef web fill:#3b82f6,stroke:#fff,color:#fff
+    classDef api fill:#059669,stroke:#fff,color:#fff
+    classDef autopost fill:#7c3aed,stroke:#fff,color:#fff
+    classDef telegram fill:#0088cc,stroke:#fff,color:#fff
+    classDef flow fill:#f59e0b,stroke:#fff,color:#000
+    
+    class UI,Editor,GroupsUI,Controls web
+    class AutopostAPI,Status,Connect,Groups,Post,Stop,Logs,Folders api
+    class Poster,Client,ConfigFile,Delay,Limit,Quiet,GroupsFile,MessageFile,LogFile autopost
+    class Session,G1,G2,G3,GN telegram
+    class F1,F2,F3,F4,F5,F6 flow

@@ -210,10 +210,23 @@ async def normalize_all_phones():
     }
 
 @router.post("/enrich-all")
-async def enrich_all_contacts():
-    """Enrich all contacts with WhatsApp profile data"""
+async def enrich_all_contacts(reset: bool = False):
+    """
+    Enrich all contacts with WhatsApp profile data.
+    Continues from last checkpoint unless reset=True.
+    
+    Args:
+        reset: If True, start from beginning ignoring checkpoint
+    """
     from app.services.contact_enrichment_service import contact_enrichment_service
-    return await contact_enrichment_service.enrich_all_contacts()
+    return await contact_enrichment_service.enrich_all_contacts(reset=reset)
+
+@router.delete("/enrich-all/checkpoint")
+async def clear_enrichment_checkpoint():
+    """Clear enrichment checkpoint to start fresh next time"""
+    from app.services.contact_enrichment_service import contact_enrichment_service
+    contact_enrichment_service.clear_checkpoint()
+    return {"status": "ok", "message": "Checkpoint очищен"}
 
 @router.get("/enrich-all/status")
 async def get_enrichment_status():
