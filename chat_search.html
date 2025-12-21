@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row mb-4">
+        <div class="col-12 flex justify-between items-center">
+            <div>
+                <h1 class="text-white text-3xl font-bold mb-2">🔍 Поиск в Telegram</h1>
+                <p class="text-gray-400">Поиск чатов и каналов по ключевым словам</p>
+            </div>
+            <div class="flex bg-white/10 rounded-lg p-1">
+                <button id="tabChats" onclick="switchTab('chats')" class="px-4 py-2 rounded-lg text-white bg-primary">Чаты</button>
+                <button id="tabChannels" onclick="switchTab('channels')" class="px-4 py-2 rounded-lg text-white/70">Каналы</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statsChats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-white" id="totalChats">0</div>
+            <div class="text-gray-400 text-sm">Всего чатов</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-green-400" id="relevantChats">0</div>
+            <div class="text-gray-400 text-sm">Релевантных</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-blue-400" id="joinedChats">0</div>
+            <div class="text-gray-400 text-sm">Вступили</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-yellow-400" id="keywordsCount">0</div>
+            <div class="text-gray-400 text-sm">Ключевых слов</div>
+        </div>
+    </div>
+
+    <div id="statsChannels" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-white" id="totalChannels">0</div>
+            <div class="text-gray-400 text-sm">Всего каналов</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-purple-400" id="analyzedChannels">0</div>
+            <div class="text-gray-400 text-sm">Проанализировано</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <div class="text-3xl font-bold text-yellow-400" id="keywordsCount2">0</div>
+            <div class="text-gray-400 text-sm">Ключевых слов</div>
+        </div>
+        <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+            <button onclick="exportChannels()" class="w-full px-3 py-2 bg-green-600 text-white rounded-lg text-sm">📥 Экспорт</button>
+        </div>
+    </div>
+
+    <div id="contentChats" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-1 space-y-4">
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <h2 class="text-white text-lg font-bold mb-3">🚀 Запуск поиска</h2>
+                <button id="startSearchBtn" onclick="startSearch()" class="w-full px-4 py-3 bg-primary text-white rounded-lg">Начать поиск</button>
+                <div id="searchProgress" class="hidden mt-3">
+                    <div class="text-white/70 text-sm" id="searchStatus">Поиск...</div>
+                </div>
+            </div>
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <h2 class="text-white text-lg font-bold mb-3">📝 Ключевые слова</h2>
+                <textarea id="keywordsInput" rows="8" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm" placeholder="Ключевые слова"></textarea>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="saveKeywords()" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm">Сохранить</button>
+                    <button onclick="loadDefaultKeywords()" class="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg text-sm">По умолчанию</button>
+                </div>
+            </div>
+        </div>
+        <div class="lg:col-span-2">
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-white text-lg font-bold">📋 Найденные чаты</h2>
+                    <button onclick="loadChats()" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">🔄</button>
+                </div>
+                <div id="chatsList" class="space-y-2 max-h-[500px] overflow-y-auto">
+                    <div class="text-center text-gray-400 py-8">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contentChannels" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-1 space-y-4">
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <h2 class="text-white text-lg font-bold mb-3">📡 Поиск каналов</h2>
+                <button id="startChannelBtn" onclick="startChannelSearch()" class="w-full px-4 py-3 bg-purple-600 text-white rounded-lg">Найти каналы</button>
+                <div id="channelProgress" class="hidden mt-3">
+                    <div class="text-white/70 text-sm" id="channelStatus">Поиск...</div>
+                </div>
+            </div>
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <h2 class="text-white text-lg font-bold mb-3">📝 Ключевые слова</h2>
+                <textarea id="keywordsInput2" rows="8" class="w-full bg-black/20 border border-white/20 rounded-lg text-white px-3 py-2 text-sm"></textarea>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="saveKeywords()" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm">Сохранить</button>
+                </div>
+            </div>
+        </div>
+        <div class="lg:col-span-2">
+            <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-white text-lg font-bold">📡 Найденные каналы</h2>
+                    <button onclick="loadFoundChannels()" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">🔄</button>
+                </div>
+                <div id="foundChannelsList" class="space-y-2 max-h-[500px] overflow-y-auto">
+                    <div class="text-center text-gray-400 py-8">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+let allChats = [];
+let allChannels = [];
+let currentTab = 'chats';
+
+function switchTab(tab) {
+    currentTab = tab;
+    const isChats = tab === 'chats';
+    document.getElementById('tabChats').className = isChats ? 'px-4 py-2 rounded-lg text-white bg-primary' : 'px-4 py-2 rounded-lg text-white/70';
+    document.getElementById('tabChannels').className = !isChats ? 'px-4 py-2 rounded-lg text-white bg-primary' : 'px-4 py-2 rounded-lg text-white/70';
+    document.getElementById('statsChats').classList.toggle('hidden', !isChats);
+    document.getElementById('statsChannels').classList.toggle('hidden', isChats);
+    document.getElementById('contentChats').classList.toggle('hidden', !isChats);
+    document.getElementById('contentChannels').classList.toggle('hidden', isChats);
+    if (!isChats) loadFoundChannels();
+}
+
+async function loadChats() {
+    try {
+        const res = await fetch('/api/chat-search/chats');
+        const data = await res.json();
+        allChats = data.chats || [];
+        document.getElementById('totalChats').textContent = data.total || 0;
+        document.getElementById('relevantChats').textContent = data.relevant || 0;
+        document.getElementById('joinedChats').textContent = data.joined || 0;
+        renderChats(allChats);
+    } catch (e) { console.error(e); }
+}
+
+function renderChats(chats) {
+    const c = document.getElementById('chatsList');
+    if (!chats.length) { c.innerHTML = '<div class="text-center text-gray-400 py-8">Чаты не найдены</div>'; return; }
+    c.innerHTML = chats.map(ch => `<div class="bg-black/20 rounded-lg p-3">
+        <div class="text-white font-medium">${esc(ch.title)}</div>
+        <div class="text-gray-400 text-sm">@${ch.username} • ${ch.participants_count || '?'} уч.</div>
+        <div class="flex gap-2 mt-2">
+            <a href="https://t.me/${ch.username}" target="_blank" class="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">Открыть</a>
+        </div></div>`).join('');
+}
+
+async function loadFoundChannels() {
+    try {
+        const res = await fetch('/api/chat-search/channels');
+        const data = await res.json();
+        allChannels = data.channels || [];
+        document.getElementById('totalChannels').textContent = data.total || 0;
+        document.getElementById('analyzedChannels').textContent = data.analyzed || 0;
+        renderChannels(allChannels);
+    } catch (e) { console.error(e); }
+}
+window.loadChannels = loadFoundChannels;
+
+function renderChannels(chs) {
+    const c = document.getElementById('foundChannelsList');
+    if (!chs.length) { c.innerHTML = '<div class="text-gray-400 py-8 text-center">Нет каналов</div>'; return; }
+    c.innerHTML = chs.map(ch => `<div class="bg-black/20 rounded-lg p-3">
+        <div class="text-white font-medium">${esc(ch.title)}</div>
+        <div class="text-gray-400 text-sm">@${ch.username} • ${formatNum(ch.subscribers)}</div>
+        ${ch.ai_analysis ? `<div class="mt-2 p-3 bg-slate-800 border border-slate-600 rounded text-sm"><div class="font-bold text-emerald-400 mb-2">🤖 AI анализ:</div><div class="text-white prose prose-sm prose-invert max-w-none">${formatMarkdown(ch.ai_analysis)}</div></div>` : ''}
+        <div class="flex gap-2 mt-2">
+            <a href="https://t.me/${ch.username}" target="_blank" class="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">Открыть</a>
+            <button onclick="analyzeChannel(${ch.channel_id})" class="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs">🤖</button>
+        </div></div>`).join('');
+}
+
+async function loadKeywords() {
+    try {
+        const res = await fetch('/api/chat-search/keywords');
+        const data = await res.json();
+        const kw = (data.keywords || []).join('\n');
+        document.getElementById('keywordsInput').value = kw;
+        document.getElementById('keywordsInput2').value = kw;
+        document.getElementById('keywordsCount').textContent = data.keywords?.length || 0;
+        document.getElementById('keywordsCount2').textContent = data.keywords?.length || 0;
+    } catch (e) { console.error(e); }
+}
+
+async function saveKeywords() {
+    const kw = document.getElementById('keywordsInput').value.split('\n').filter(k => k.trim());
+    try {
+        await fetch('/api/chat-search/keywords', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({keywords: kw})});
+        loadKeywords();
+        alert('Сохранено!');
+    } catch (e) { alert('Ошибка сохранения'); }
+}
+
+async function loadDefaultKeywords() {
+    try { await fetch('/api/chat-search/keywords/default', {method: 'POST'}); loadKeywords(); } catch (e) { console.error(e); }
+}
+
+async function startSearch() {
+    const btn = document.getElementById('startSearchBtn');
+    btn.disabled = true;
+    btn.textContent = 'Поиск...';
+    document.getElementById('searchProgress').classList.remove('hidden');
+    try {
+        const res = await fetch('/api/chat-search/search', {method: 'POST'});
+        const data = await res.json();
+        if (data.task_id) pollStatus(data.task_id);
+        else { resetBtn(); alert(data.error || 'Ошибка'); }
+    } catch (e) { resetBtn(); alert('Ошибка запуска'); }
+}
+
+function resetBtn() {
+    const btn = document.getElementById('startSearchBtn');
+    btn.disabled = false;
+    btn.textContent = 'Начать поиск';
+    document.getElementById('searchProgress').classList.add('hidden');
+}
+
+async function pollStatus(taskId) {
+    try {
+        const res = await fetch(`/api/chat-search/status/${taskId}`);
+        const data = await res.json();
+        document.getElementById('searchStatus').textContent = data.status || 'Обработка...';
+        if (data.status === 'completed' || data.status === 'error') {
+            resetBtn();
+            loadChats();
+        } else { setTimeout(() => pollStatus(taskId), 2000); }
+    } catch (e) { resetBtn(); }
+}
+
+async function startChannelSearch() {
+    const btn = document.getElementById('startChannelBtn');
+    btn.disabled = true;
+    btn.textContent = 'Поиск...';
+    document.getElementById('channelProgress').classList.remove('hidden');
+    try {
+        const res = await fetch('/api/chat-search/channels/search', {method: 'POST'});
+        const data = await res.json();
+        if (data.task_id) pollChannelStatus(data.task_id);
+        else { resetChannelBtn(); alert(data.error || 'Ошибка'); }
+    } catch (e) { resetChannelBtn(); alert('Ошибка запуска'); }
+}
+
+function resetChannelBtn() {
+    const btn = document.getElementById('startChannelBtn');
+    btn.disabled = false;
+    btn.textContent = 'Найти каналы';
+    document.getElementById('channelProgress').classList.add('hidden');
+}
+
+async function pollChannelStatus(taskId) {
+    try {
+        const res = await fetch(`/api/chat-search/channels/status/${taskId}`);
+        const data = await res.json();
+        document.getElementById('channelStatus').textContent = data.status || 'Обработка...';
+        if (data.status === 'completed' || data.status === 'error') {
+            resetChannelBtn();
+            loadFoundChannels();
+        } else { setTimeout(() => pollChannelStatus(taskId), 2000); }
+    } catch (e) { resetChannelBtn(); }
+}
+
+async function analyzeChannel(channelId) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+        const res = await fetch(`/api/chat-search/channels/${channelId}/analyze`, {method: 'POST'});
+        const data = await res.json();
+        if (data.success) {
+            alert('Анализ завершен!');
+            loadFoundChannels();
+        } else { alert(data.error || 'Ошибка анализа'); }
+    } catch (e) { alert('Ошибка анализа'); }
+    btn.disabled = false;
+    btn.textContent = '🤖';
+}
+
+async function exportChannels() {
+    try {
+        const res = await fetch('/api/chat-search/channels/export');
+        const data = await res.json();
+        if (data.success) alert(`Экспортировано ${data.count} каналов`);
+        else alert(data.error || 'Ошибка экспорта');
+    } catch (e) { alert('Ошибка экспорта'); }
+}
+
+function esc(s) { 
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); 
+}
+
+function formatMarkdown(text) {
+    if (!text) return '';
+    if (typeof marked !== 'undefined' && marked.parse) {
+        try { return marked.parse(text); } catch(e) { console.error('Markdown error:', e); }
+    }
+    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+}
+
+function formatNum(n) {
+    if (!n) return '0';
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return n.toString();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadChats();
+    loadKeywords();
+});
+</script>
+{% endblock %}
